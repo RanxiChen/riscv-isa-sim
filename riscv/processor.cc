@@ -62,11 +62,16 @@ processor_t::processor_t(const char* isa_str, const char* priv_str,
   VU.ELEN = isa.get_elen();
   VU.vlenb = isa.get_vlen() / 8;
   VU.vstart_alu = 0;
-  // TODO: AME hardware constants should come from ISA parser / config.
-  AMU.ELEN = 32;
-  AMU.TLEN = 512;
-  AMU.TRLEN = 128;
+  AMU.ELEN = isa.get_melen();
+  AMU.TLEN = isa.get_mtlen();
+  AMU.TRLEN = isa.get_mtrlen();
   AMU.ROWNUM = AMU.TLEN / AMU.TRLEN;
+  AMU.TLENB = AMU.TLEN / 8;
+  AMU.TRLENB = AMU.TRLEN / 8;
+  AMU.ARLEN = AMU.ROWNUM * AMU.ELEN;
+  AMU.ALEN = AMU.ARLEN * AMU.ROWNUM;
+  AMU.ARLENB = AMU.ARLEN / 8;
+  AMU.ALENB = AMU.ALEN / 8;
 
   mmu = new mmu_t(sim, cfg->endianness, this, cfg->cache_blocksz);
 

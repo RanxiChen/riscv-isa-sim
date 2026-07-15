@@ -4,6 +4,40 @@
 #include "ame_unit.h"
 #include "processor.h"
 
+#include <cstdlib>
+#include <cstring>
+
+// =============================================================================
+// MatrixReg — one AME architectural matrix register
+// =============================================================================
+
+MatrixReg::~MatrixReg()
+{
+  free(data);
+  data = nullptr;
+}
+
+void MatrixReg::reset(reg_t new_total_bits, reg_t new_row_bits)
+{
+  assert(new_total_bits != 0);
+  assert(new_row_bits != 0);
+  assert(new_total_bits % new_row_bits == 0);
+  assert(new_total_bits % 8 == 0);
+  assert(new_row_bits % 8 == 0);
+
+  free(data);
+
+  total_bits = new_total_bits;
+  row_bits = new_row_bits;
+  total_bytes = total_bits / 8;
+  row_bytes = row_bits / 8;
+  rownum = total_bits / row_bits;
+
+  data = malloc(total_bytes);
+  assert(data != nullptr);
+  memset(data, 0, total_bytes);
+}
+
 // =============================================================================
 // ame_mcsr_t implementation — composite CSR for xmcsr (0x802)
 // =============================================================================
@@ -58,6 +92,12 @@ bool ame_mcsr_t::unlogged_write(const reg_t val) noexcept
 
 void ameUnit_t::reset()
 {
+  for (auto& reg : tile_regs)
+    reg.reset(TLEN, TRLEN);
+
+  for (auto& reg : acc_regs)
+    reg.reset(ALEN, ARLEN);
+
   auto state = p->get_state();
 
   // --- URW CSRs: register to global CSR map and keep local shared_ptr ---
@@ -103,13 +143,13 @@ void ameUnit_t::reset()
 
   // 0xCC1: xtlenb = TLEN / 8
   state->add_csr(0xCC1,
-    std::make_shared<matrix_csr_t>(p, 0xCC1, /*init*/ TLEN / 8));
+    std::make_shared<matrix_csr_t>(p, 0xCC1, /*init*/ TLENB));
 
   // 0xCC2: xtrlenb = TRLEN / 8
   state->add_csr(0xCC2,
-    std::make_shared<matrix_csr_t>(p, 0xCC2, /*init*/ TRLEN / 8));
+    std::make_shared<matrix_csr_t>(p, 0xCC2, /*init*/ TRLENB));
 
   // 0xCC3: xalenb = ROWNUM^2 * ELEN / 8
   state->add_csr(0xCC3,
-    std::make_shared<matrix_csr_t>(p, 0xCC3, /*init*/ ROWNUM * ROWNUM * ELEN / 8));
+    std::make_shared<matrix_csr_t>(p, 0xCC3, /*init*/ ALENB));
 }

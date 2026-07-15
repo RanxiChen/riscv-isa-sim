@@ -3,6 +3,8 @@
 #ifndef _RISCV_AME_UNIT_H
 #define _RISCV_AME_UNIT_H
 
+#include <array>
+#include <cassert>
 #include <cstdint>
 
 #include "decode.h"
@@ -10,16 +12,73 @@
 
 class processor_t;
 
+// --- MatrixReg: one two-dimensional AME architectural matrix register ---
+//
+// MatrixReg owns a single register's storage.  It does not know whether it is
+// tr* or acc*; the caller supplies total_bits and row_bits at reset time.
+// Access is row-major and intentionally type-erased except for the caller's
+// template parameter, matching vectorUnit_t::elt<T>()'s reinterpretation model.
+class MatrixReg
+{
+public:
+  MatrixReg() = default;
+  MatrixReg(reg_t total_bits, reg_t row_bits) { reset(total_bits, row_bits); }
+  ~MatrixReg();
+
+  MatrixReg(const MatrixReg&) = delete;
+  MatrixReg& operator=(const MatrixReg&) = delete;
+
+  void reset(reg_t total_bits, reg_t row_bits);
+
+  template<typename T> T* row_ptr(reg_t row) {
+    assert(data != nullptr);
+    assert(row < rownum);
+    assert(row_bytes % sizeof(T) == 0);
+    return reinterpret_cast<T*>(reinterpret_cast<char*>(data) + row * row_bytes);
+  }
+
+  template<typename T> T& elt(reg_t row, reg_t col) {
+    assert(col < row_bytes / sizeof(T));
+    return row_ptr<T>(row)[col];
+  }
+
+  reg_t get_total_bits() const { return total_bits; }
+  reg_t get_row_bits() const { return row_bits; }
+  reg_t get_total_bytes() const { return total_bytes; }
+  reg_t get_row_bytes() const { return row_bytes; }
+  reg_t get_rownum() const { return rownum; }
+
+private:
+  void *data = nullptr;
+  reg_t total_bits = 0;
+  reg_t row_bits = 0;
+  reg_t total_bytes = 0;
+  reg_t row_bytes = 0;
+  reg_t rownum = 0;
+};
+
 class ameUnit_t
 {
 public:
   processor_t* p = nullptr;
 
   // --- Hardware constants (Chapter 2) ---
-  reg_t ELEN = 0;   // max element width in bits
-  reg_t TLEN = 0;   // tile register total bits
-  reg_t TRLEN = 0;  // tile register bits per row
-  reg_t ROWNUM = 0; // logical rows = TLEN / TRLEN
+  reg_t ELEN = 0;    // max element width in bits
+  reg_t TLEN = 0;    // tile register total bits
+  reg_t TRLEN = 0;   // tile register bits per row
+  reg_t ROWNUM = 0;  // logical rows = TLEN / TRLEN
+
+  // --- Derived hardware constants, matching RVV's vlenb pattern ---
+  reg_t TLENB = 0;   // tile register total bytes = TLEN / 8
+  reg_t TRLENB = 0;  // tile register row bytes = TRLEN / 8
+  reg_t ARLEN = 0;   // accumulation register row bits = ROWNUM * ELEN
+  reg_t ALEN = 0;    // accumulation register total bits = ARLEN * ROWNUM
+  reg_t ARLENB = 0;  // accumulation register row bytes = ARLEN / 8
+  reg_t ALENB = 0;   // accumulation register total bytes = ALEN / 8
+
+  // --- Architectural matrix register storage (Chapter 3.1) ---
+  std::array<MatrixReg, 4> tile_regs;
+  std::array<MatrixReg, 4> acc_regs;
 
   // --- URW CSRs (Chapter 3) ---
 
@@ -50,9 +109,16 @@ public:
   reg_t get_xmfflags(){ return xmfflags->read(); }
   reg_t get_xmsaten() { return xmsaten->read(); }
   reg_t get_tlen()    { return TLEN; }
-  reg_t get_treln()   { return TRLEN; }
+  reg_t get_trlen()   { return TRLEN; }
+  reg_t get_treln()   { return TRLEN; } // Backward-compatible typo alias.
   reg_t get_elen()    { return ELEN; }
   reg_t get_rownum()  { return ROWNUM; }
+  reg_t get_tlenb()   { return TLENB; }
+  reg_t get_trlenb()  { return TRLENB; }
+  reg_t get_arlen()   { return ARLEN; }
+  reg_t get_alen()    { return ALEN; }
+  reg_t get_arlenb()  { return ARLENB; }
+  reg_t get_alenb()   { return ALENB; }
 
   void reset();
 
