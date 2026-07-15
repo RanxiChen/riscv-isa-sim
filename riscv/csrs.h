@@ -797,6 +797,23 @@ class vector_csr_t: public basic_csr_t {
 
 typedef std::shared_ptr<vector_csr_t> vector_csr_t_p;
 
+// For AME (Matrix Extension) CSRs.
+// Currently identical to basic_csr_t in behaviour (read/write pass through,
+// permissions checked via CSR address encoding).
+// TODO: add require(mstatus.MS != Off) when MS field is defined (spec 3.10).
+class matrix_csr_t : public basic_csr_t {
+ public:
+  matrix_csr_t(processor_t* const proc, const reg_t addr, const reg_t init=0)
+    : basic_csr_t(proc, addr, init) {}
+
+  virtual void verify_permissions(insn_t insn, bool write) const override {
+    // TODO: require(ame ext && mstatus.MS != Off) when MS defined
+    basic_csr_t::verify_permissions(insn, write);
+  }
+};
+
+typedef std::shared_ptr<matrix_csr_t> matrix_csr_t_p;
+
 // For CSRs shared between Vector and P extensions (vxsat)
 class vxsat_csr_t: public masked_csr_t {
  public:

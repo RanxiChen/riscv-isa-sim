@@ -43,6 +43,7 @@ processor_t::processor_t(const char* isa_str, const char* priv_str,
   last_pc(1), executions(1), TM(cfg->trigger_count)
 {
   VU.p = this;
+  AMU.p = this;
   TM.proc = this;
 
 #ifndef HAVE_INT128
@@ -61,6 +62,11 @@ processor_t::processor_t(const char* isa_str, const char* priv_str,
   VU.ELEN = isa.get_elen();
   VU.vlenb = isa.get_vlen() / 8;
   VU.vstart_alu = 0;
+  // TODO: AME hardware constants should come from ISA parser / config.
+  AMU.ELEN = 32;
+  AMU.TLEN = 512;
+  AMU.TRLEN = 128;
+  AMU.ROWNUM = AMU.TLEN / AMU.TRLEN;
 
   mmu = new mmu_t(sim, cfg->endianness, this, cfg->cache_blocksz);
 
@@ -153,7 +159,8 @@ void processor_t::reset()
   mmu->flush_tlb();
   if (any_vector_extensions())
     VU.reset();
-  in_wfi = false;
+  // TODO: gate on AME extension flag when added
+  AMU.reset();
 
   if (n_pmp > 0) {
     // For backwards compatibility with software that is unaware of PMP,
