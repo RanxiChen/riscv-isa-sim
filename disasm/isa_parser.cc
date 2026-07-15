@@ -337,6 +337,9 @@ isa_parser_t::isa_parser_t(const char* str, const char *priv)
 
   vlen = 0;
   elen = 0;
+  melen = 32;    // AME: ELEN (max matrix element width in bits)
+  mtlen = 1024;  // AME: TLEN (tile register total bits)
+  mtrlen = 128;  // AME: TRLEN (tile register row bits)
   zvf = false;
   zvd = false;
 

@@ -137,6 +137,9 @@ public:
   std::string get_isa_string() const { return isa_string; }
   reg_t get_vlen() const { return vlen; }
   reg_t get_elen() const { return elen; }
+  reg_t get_melen() const { return melen; }
+  reg_t get_mtlen() const { return mtlen; }
+  reg_t get_mtrlen() const { return mtrlen; }
   bool get_zvf() const { return zvf; }
   bool get_zvd() const { return zvd; }
   bool extension_enabled(unsigned char ext) const {
@@ -146,6 +149,7 @@ public:
     return extension_table[ext];
   }
   bool has_any_vector() const { return vlen > 0; }
+  bool has_any_matrix() const { return mtlen > 0; }
 
   std::bitset<NUM_ISA_EXTENSIONS> get_extension_table() const { return extension_table; }
 
@@ -156,6 +160,9 @@ protected:
   reg_t max_isa;
   reg_t vlen;
   reg_t elen;
+  reg_t melen;
+  reg_t mtlen;
+  reg_t mtrlen;
   bool zvf;
   bool zvd;
   std::bitset<NUM_ISA_EXTENSIONS> extension_table;
