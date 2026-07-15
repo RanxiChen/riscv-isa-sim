@@ -91,6 +91,12 @@ private:
   matrix_csr_t_p _xmfflags;
   matrix_csr_t_p _xmfrm;
   matrix_csr_t_p _xmsaten;
+
+  // xmcsr field positions
+  static const unsigned XMSAT_LSB   = 2;
+  static const unsigned XMFFLAGS_LSB = 3;
+  static const unsigned XMFRM_LSB   = 8;
+  static const unsigned XMSATEN_LSB = 11;
 };
 
 #endif

@@ -19,6 +19,11 @@ ame_mcsr_t::ame_mcsr_t(processor_t* const proc, const reg_t addr,
     _xmsaten(xmsaten)
   {}
 
+const unsigned ame_mcsr_t::XMSAT_LSB;
+const unsigned ame_mcsr_t::XMFFLAGS_LSB;
+const unsigned ame_mcsr_t::XMFRM_LSB;
+const unsigned ame_mcsr_t::XMSATEN_LSB;
+
 void ame_mcsr_t::verify_permissions(insn_t insn, bool write) const
 {
   // All sub-CSRs have the same privilege (URW via address encoding).
