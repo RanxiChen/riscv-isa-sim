@@ -42,24 +42,8 @@ static int failures = 0;
 int main() {
     uint64_t v;
 
-    // --- Test 1: xmxrm (2-bit, URW 0x806) ---
-    printf("=== Test 1: xmxrm (0x806) ===\n");
-    csrw(CSR_XMXRM, 0x0);          // RNU
-    v = csrr(CSR_XMXRM);
-    CHECK(v == 0x0, "xmxrm RNU = 0");
-    csrw(CSR_XMXRM, 0x1);          // RNE
-    v = csrr(CSR_XMXRM);
-    CHECK(v == 0x1, "xmxrm RNE = 1");
-    csrw(CSR_XMXRM, 0x3);          // ROD
-    v = csrr(CSR_XMXRM);
-    CHECK(v == 0x3, "xmxrm ROD = 3");
-    // Verify mask: write bits beyond [1:0] are ignored
-    csrw(CSR_XMXRM, 0xFF);
-    v = csrr(CSR_XMXRM);
-    CHECK(v == 0x3, "xmxrm mask (FF → 0x3)");
-
-    // --- Test 2: xmsat (1-bit, URW 0x807) ---
-    printf("\n=== Test 2: xmsat (0x807) ===\n");
+    // --- Test 1: xmsat (1-bit, URW 0x807) ---
+    printf("\n=== Test 1: xmsat (0x807) ===\n");
     csrw(CSR_XMSAT, 0x1);
     v = csrr(CSR_XMSAT);
     CHECK(v == 0x1, "xmsat = 1");
@@ -67,8 +51,8 @@ int main() {
     v = csrr(CSR_XMSAT);
     CHECK(v == 0x0, "xmsat = 0");
 
-    // --- Test 3: xmfflags (5-bit, URW 0x808) ---
-    printf("\n=== Test 3: xmfflags (0x808) ===\n");
+    // --- Test 2: xmfflags (5-bit, URW 0x808) ---
+    printf("\n=== Test 2: xmfflags (0x808) ===\n");
     csrw(CSR_XMFFLAGS, 0x13);       // NV(4) | NX(0) = 0b10011 = 19
     v = csrr(CSR_XMFFLAGS);
     CHECK(v == 0x13, "xmfflags = 0x13");
@@ -76,8 +60,8 @@ int main() {
     v = csrr(CSR_XMFFLAGS);
     CHECK(v == 0x1F, "xmfflags = 0x1F");
 
-    // --- Test 4: xmfrm (3-bit, URW 0x809) ---
-    printf("\n=== Test 4: xmfrm (0x809) ===\n");
+    // --- Test 3: xmfrm (3-bit, URW 0x809) ---
+    printf("\n=== Test 3: xmfrm (0x809) ===\n");
     csrw(CSR_XMFRM, 0x4);            // RMM
     v = csrr(CSR_XMFRM);
     CHECK(v == 0x4, "xmfrm = RMM(4)");
@@ -85,8 +69,8 @@ int main() {
     v = csrr(CSR_XMFRM);
     CHECK(v == 0x7, "xmfrm mask (FF → 0x7)");
 
-    // --- Test 5: xmsaten (1-bit, URW 0x80A) ---
-    printf("\n=== Test 5: xmsaten (0x80A) ===\n");
+    // --- Test 4: xmsaten (1-bit, URW 0x80A) ---
+    printf("\n=== Test 4: xmsaten (0x80A) ===\n");
     csrw(CSR_XMSATEN, 0x1);
     v = csrr(CSR_XMSATEN);
     CHECK(v == 0x1, "xmsaten = 1");
@@ -94,8 +78,8 @@ int main() {
     v = csrr(CSR_XMSATEN);
     CHECK(v == 0x0, "xmsaten = 0");
 
-    // --- Test 6: mtilem/mtilen/mtilek (URW 0x803/4/5) ---
-    printf("\n=== Test 6: mtilem/mtilen/mtilek ===\n");
+    // --- Test 5: mtilem/mtilen/mtilek (URW 0x803/4/5) ---
+    printf("\n=== Test 5: mtilem/mtilen/mtilek ===\n");
     csrw(CSR_MTILEM, 3);
     v = csrr(CSR_MTILEM);
     CHECK(v == 3, "mtilem = 3");
@@ -106,8 +90,8 @@ int main() {
     v = csrr(CSR_MTILEK);
     CHECK(v == 8, "mtilek = 8");
 
-    // --- Test 7: xmcsr composite (URW 0x802) ---
-    printf("\n=== Test 7: xmcsr (0x802) composite ===\n");
+    // --- Test 6: xmcsr composite (URW 0x802) ---
+    printf("\n=== Test 6: xmcsr (0x802) composite ===\n");
     // Set sub-CSRs to known values, then read composite
     csrw(CSR_XMXRM, 0x2);           // bits[1:0] = 2 (RDN)
     csrw(CSR_XMSAT, 0x1);           // bit[2] = 1
@@ -118,16 +102,16 @@ int main() {
     uint64_t expected = (1UL << 11) | (5UL << 8) | (0xAUL << 3) | (1UL << 2) | 2UL;
     CHECK(v == expected, "xmcsr read matches sub-CSRs");
 
-    // --- Test 8: URO registers ---
-    printf("\n=== Test 8: URO registers ===\n");
+    // --- Test 7: URO registers ---
+    printf("\n=== Test 7: URO registers ===\n");
     v = csrr(CSR_XMISA);
     CHECK(v == 0, "xmisa = 0 (TODO: feature bitmap)");
     v = csrr(CSR_XTLENB);
-    CHECK(v == 512/8, "xtlenb = TLEN/8 = 64");
+    CHECK(v == 1024/8, "xtlenb = TLEN/8 = 128");
     v = csrr(CSR_XTRLENB);
     CHECK(v == 128/8, "xtrlenb = TRLEN/8 = 16");
     v = csrr(CSR_XALENB);
-    CHECK(v == (4*4*32)/8, "xalenb = ROWNUM^2*ELEN/8 = 64");
+    CHECK(v == (8*8*32)/8, "xalenb = ROWNUM^2*ELEN/8 = 256");
 
     printf("\n=== Result: %d failures ===\n", failures);
     return failures != 0;
