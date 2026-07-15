@@ -137,12 +137,53 @@ public:
   // xmsaten — saturation enable for int/fp8 MMA (1-bit).
   matrix_csr_t_p xmsaten = 0;
 
+  // --- CSR semantic placeholders (Chapter 3.4-3.9) ---
+  //
+  // These names document CSR encodings for future instruction semantics.  They
+  // intentionally do not implement rounding, saturation, exception accrual, or
+  // invalid-mode traps yet.
+  static constexpr reg_t XMXRM_MASK = 0x3;
+  static constexpr reg_t XMSAT_MASK = 0x1;
+  static constexpr reg_t XMFFLAGS_MASK = 0x1F;
+  static constexpr reg_t XMFRM_MASK = 0x7;
+  static constexpr reg_t XMSATEN_MASK = 0x1;
+
+  enum xmxrm_rounding_mode : reg_t {
+    XMXRM_RNU = 0,  // round-to-nearest-up
+    XMXRM_RNE = 1,  // round-to-nearest-even
+    XMXRM_RDN = 2,  // round-down / truncate
+    XMXRM_ROD = 3   // round-to-odd
+  };
+
+  enum xmfrm_rounding_mode : reg_t {
+    XMFRM_RNE = 0,
+    XMFRM_RTZ = 1,
+    XMFRM_RDN = 2,
+    XMFRM_RUP = 3,
+    XMFRM_RMM = 4
+    // Values 5-7 are invalid by spec; future FP AME instructions will trap.
+  };
+
+  enum xmfflags_flag : reg_t {
+    XMFFLAG_NX       = 1 << 0,
+    XMFFLAG_UF       = 1 << 1,
+    XMFFLAG_OF       = 1 << 2,
+    XMFFLAG_RESERVED = 1 << 3,
+    XMFFLAG_NV       = 1 << 4
+  };
+
+  bool xmfrm_is_valid(reg_t mode) const { return mode <= XMFRM_RMM; }
+  bool xmsaten_enabled() { return (get_xmsaten() & XMSATEN_MASK) != 0; }
+  bool xmsat_set() { return (get_xmsat() & XMSAT_MASK) != 0; }
+
   // --- Accessors (for use by AME instructions) ---
   reg_t get_xmxrm()   { return xmxrm->read(); }
   reg_t get_xmfrm()   { return xmfrm->read(); }
   reg_t get_xmsat()   { return xmsat->read(); }
   reg_t get_xmfflags(){ return xmfflags->read(); }
   reg_t get_xmsaten() { return xmsaten->read(); }
+  xmxrm_rounding_mode get_xmxrm_mode() { return static_cast<xmxrm_rounding_mode>(get_xmxrm() & XMXRM_MASK); }
+  xmfrm_rounding_mode get_xmfrm_mode() { return static_cast<xmfrm_rounding_mode>(get_xmfrm() & XMFRM_MASK); }
   reg_t get_tlen()    { return TLEN; }
   reg_t get_trlen()   { return TRLEN; }
   reg_t get_treln()   { return TRLEN; } // Backward-compatible typo alias.
@@ -193,11 +234,18 @@ private:
   matrix_csr_t_p _xmfrm;
   matrix_csr_t_p _xmsaten;
 
-  // xmcsr field positions
+  // xmcsr field positions and masks (Chapter 3.4).
+  static const unsigned XMXRM_LSB   = 0;
   static const unsigned XMSAT_LSB   = 2;
   static const unsigned XMFFLAGS_LSB = 3;
   static const unsigned XMFRM_LSB   = 8;
   static const unsigned XMSATEN_LSB = 11;
+
+  static constexpr reg_t XMXRM_FIELD_MASK   = 0x3;
+  static constexpr reg_t XMSAT_FIELD_MASK   = 0x1;
+  static constexpr reg_t XMFFLAGS_FIELD_MASK = 0x1F;
+  static constexpr reg_t XMFRM_FIELD_MASK   = 0x7;
+  static constexpr reg_t XMSATEN_FIELD_MASK = 0x1;
 };
 
 #endif

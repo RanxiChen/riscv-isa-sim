@@ -72,16 +72,16 @@ reg_t ame_mcsr_t::read() const noexcept
        | (_xmfrm->read()   << XMFRM_LSB)
        | (_xmfflags->read() << XMFFLAGS_LSB)
        | (_xmsat->read()   << XMSAT_LSB)
-       | (_xmxrm->read());
+       | (_xmxrm->read()   << XMXRM_LSB);
 }
 
 bool ame_mcsr_t::unlogged_write(const reg_t val) noexcept
 {
-  _xmxrm->write(val & 0x3);
-  _xmsat->write((val >> XMSAT_LSB) & 0x1);
-  _xmfflags->write((val >> XMFFLAGS_LSB) & 0x1F);
-  _xmfrm->write((val >> XMFRM_LSB) & 0x7);
-  _xmsaten->write((val >> XMSATEN_LSB) & 0x1);
+  _xmxrm->write((val >> XMXRM_LSB) & XMXRM_FIELD_MASK);
+  _xmsat->write((val >> XMSAT_LSB) & XMSAT_FIELD_MASK);
+  _xmfflags->write((val >> XMFFLAGS_LSB) & XMFFLAGS_FIELD_MASK);
+  _xmfrm->write((val >> XMFRM_LSB) & XMFRM_FIELD_MASK);
+  _xmsaten->write((val >> XMSATEN_LSB) & XMSATEN_FIELD_MASK);
   // Logging is handled by the individual sub-CSRs.
   return false;
 }
