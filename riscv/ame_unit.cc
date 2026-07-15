@@ -90,6 +90,21 @@ bool ame_mcsr_t::unlogged_write(const reg_t val) noexcept
 // ameUnit_t — AME architectural state container
 // =============================================================================
 
+reg_t ameUnit_t::xmisa_mfic_mask() const
+{
+  return reg_t(1) << (p->get_xlen() - 3);
+}
+
+reg_t ameUnit_t::xmisa_mfew_mask() const
+{
+  return reg_t(1) << (p->get_xlen() - 2);
+}
+
+reg_t ameUnit_t::xmisa_miew_mask() const
+{
+  return reg_t(1) << (p->get_xlen() - 1);
+}
+
 void ameUnit_t::reset()
 {
   for (auto& reg : tile_regs)
@@ -136,10 +151,10 @@ void ameUnit_t::reset()
 
   // --- URO CSRs: read-only hardware capacity registers ---
 
-  // 0xCC0: xmisa — matrix ISA feature bitmap
-  // TODO: populate feature bitmap per spec 3.2.
-  state->add_csr(0xCC0,
-    std::make_shared<matrix_csr_t>(p, 0xCC0, /*init*/ 0));
+  // 0xCC0: xmisa — matrix ISA feature bitmap.  Keep all bits clear until
+  // matching instruction families are implemented and guarded by feature checks.
+  state->add_csr(0xCC0, xmisa =
+    std::make_shared<matrix_csr_t>(p, 0xCC0, /*init*/ get_xmisa()));
 
   // 0xCC1: xtlenb = TLEN / 8
   state->add_csr(0xCC1,

@@ -80,6 +80,41 @@ public:
   std::array<MatrixReg, 4> tile_regs;
   std::array<MatrixReg, 4> acc_regs;
 
+  // --- xmisa feature bitmap (Chapter 3.2) ---
+  //
+  // xmisa is AME's local read-only capability declaration.  It mirrors the
+  // role of standard misa as a feature bitmap, but does not replace or update
+  // standard misa@0x301.  Bits stay clear until the corresponding instruction
+  // families are implemented and checked.
+  enum xmisa_feature_bit : unsigned {
+    XMISA_BIT_MMI4I32   = 0,
+    XMISA_BIT_MMI8I32   = 1,
+    XMISA_BIT_MMF16F16  = 2,
+    XMISA_BIT_MMF32F32  = 3,
+    XMISA_BIT_MMF64F64  = 4,
+    XMISA_BIT_MMF8F16   = 5,
+    XMISA_BIT_MMF8BF16  = 6,  // PDF bit-5 duplicate resolved by table-order shift.
+    XMISA_BIT_MMF16F32  = 7,
+    XMISA_BIT_MMBF16F32 = 8,
+    XMISA_BIT_MMF32F64  = 9,
+    XMISA_BIT_MMF8F32   = 10
+  };
+
+  static constexpr reg_t xmisa_bit(unsigned bit) { return reg_t(1) << bit; }
+
+  reg_t xmisa_features = 0;
+
+  reg_t get_xmisa() const { return xmisa_features; }
+  bool supports_xmisa_feature(reg_t feature_mask) const {
+    return (xmisa_features & feature_mask) == feature_mask;
+  }
+
+  reg_t xmisa_mfic_mask() const;
+  reg_t xmisa_mfew_mask() const;
+  reg_t xmisa_miew_mask() const;
+
+  matrix_csr_t_p xmisa = 0;
+
   // --- URW CSRs (Chapter 3) ---
 
   // mtilem/mtilen/mtilek — runtime tile shape, updated via msettile* instructions.
