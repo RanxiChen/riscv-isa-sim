@@ -21,6 +21,8 @@
 class processor_t;
 struct state_t;
 
+extern bool riscv_ame_assume_ms_enabled;
+
 enum struct elp_t {
   NO_LP_EXPECTED = 0,
   LP_EXPECTED = 1,
@@ -798,18 +800,18 @@ class vector_csr_t: public basic_csr_t {
 typedef std::shared_ptr<vector_csr_t> vector_csr_t_p;
 
 // For AME (Matrix Extension) CSRs.
-// Currently identical to basic_csr_t in behaviour (read/write pass through,
-// permissions checked via CSR address encoding).
-// TODO: add require(mstatus.MS != Off) when MS field is defined (spec 3.10).
+// A temporary global bypass keeps CSR access enabled while pk and full AME
+// instruction support are still under development.  When disabled, permissions
+// follow spec 3.10: mstatus/sstatus.MS must not be Off.
 class matrix_csr_t : public basic_csr_t {
  public:
   matrix_csr_t(processor_t* const proc, const reg_t addr, const reg_t init=0)
     : basic_csr_t(proc, addr, init) {}
 
-  virtual void verify_permissions(insn_t insn, bool write) const override {
-    // TODO: require(ame ext && mstatus.MS != Off) when MS defined
-    basic_csr_t::verify_permissions(insn, write);
-  }
+  virtual void verify_permissions(insn_t insn, bool write) const override;
+
+ protected:
+  virtual bool unlogged_write(const reg_t val) noexcept override;
 };
 
 typedef std::shared_ptr<matrix_csr_t> matrix_csr_t_p;

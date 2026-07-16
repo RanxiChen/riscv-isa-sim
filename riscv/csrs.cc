@@ -4,6 +4,8 @@
 #include <algorithm>
 
 #include "csrs.h"
+
+bool riscv_ame_assume_ms_enabled = true;
 // For processor_t:
 #include "processor.h"
 #include "mmu.h"
@@ -588,12 +590,14 @@ reg_t base_status_csr_t::compute_sstatus_write_mask() const noexcept {
   const bool has_fs = (proc->extension_enabled('S') || proc->extension_enabled('F')) && !proc->extension_enabled(EXT_ZFINX);
   // Implementations w/o V may still have mstatus.vs,
   const bool has_vs = proc->any_vector_extensions();
+  const bool has_ms = proc->get_isa().has_any_matrix();
   return 0
     | (proc->extension_enabled('S') ? (SSTATUS_SIE | SSTATUS_SPIE | SSTATUS_SPP) : 0)
     | (has_page || proc->extension_enabled_const(EXT_SSPMP)? (SSTATUS_SUM | SSTATUS_MXR) : 0)
     | (has_fs ? SSTATUS_FS : 0)
     | (proc->any_custom_extensions() ? SSTATUS_XS : 0)
     | (has_vs ? SSTATUS_VS : 0)
+    | (has_ms ? SSTATUS_MS : 0)
     | (proc->extension_enabled('S') && proc->extension_enabled(EXT_ZICFILP) ? SSTATUS_SPELP : 0)
     | (proc->extension_enabled(EXT_SSDBLTRP) ? SSTATUS_SDT : 0)
     ;
@@ -607,6 +611,7 @@ reg_t base_status_csr_t::adjust_sd(const reg_t val) const noexcept {
   const reg_t sd_bit = proc->get_const_xlen() == 64 ? SSTATUS64_SD : SSTATUS32_SD;
   if (((val & SSTATUS_FS) == SSTATUS_FS) ||
       ((val & SSTATUS_VS) == SSTATUS_VS) ||
+      ((val & SSTATUS_MS) == SSTATUS_MS) ||
       ((val & SSTATUS_XS) == SSTATUS_XS)) {
     return val | sd_bit;
   }
@@ -1747,6 +1752,18 @@ bool vector_csr_t::unlogged_write(const reg_t val) noexcept {
   if (mask == 0) return false;
   STATE.sstatus->dirty(SSTATUS_VS);
   return basic_csr_t::unlogged_write(val & mask);
+}
+
+void matrix_csr_t::verify_permissions(insn_t insn, bool write) const {
+  require(riscv_ame_assume_ms_enabled ||
+          (proc->get_isa().has_any_matrix() && STATE.sstatus->enabled(SSTATUS_MS)));
+  basic_csr_t::verify_permissions(insn, write);
+}
+
+bool matrix_csr_t::unlogged_write(const reg_t val) noexcept {
+  if (!riscv_ame_assume_ms_enabled)
+    STATE.sstatus->dirty(SSTATUS_MS);
+  return basic_csr_t::unlogged_write(val);
 }
 
 vxsat_csr_t::vxsat_csr_t(processor_t* const proc, const reg_t addr):

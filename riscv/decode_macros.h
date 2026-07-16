@@ -181,7 +181,22 @@ static inline bool is_aligned(const unsigned val, const unsigned pos)
 #define require_either_extension(A,B) require(p->extension_enabled(A) || p->extension_enabled(B));
 #define require_fp          STATE.fflags->verify_permissions(insn, false)
 #define require_accelerator require(STATE.sstatus->enabled(SSTATUS_XS))
+extern bool riscv_ame_assume_ms_enabled;
+
 #define require_vector_vs   require(p->any_vector_extensions() && STATE.sstatus->enabled(SSTATUS_VS))
+#define require_matrix_ms \
+  require(riscv_ame_assume_ms_enabled || \
+          (p->get_isa().has_any_matrix() && STATE.sstatus->enabled(SSTATUS_MS)))
+#define dirty_matrix_state \
+  do { \
+    if (!riscv_ame_assume_ms_enabled) \
+      STATE.sstatus->dirty(SSTATUS_MS); \
+  } while (0)
+#define set_matrix_state_initial \
+  do { \
+    if (!riscv_ame_assume_ms_enabled) \
+      STATE.sstatus->write((STATE.sstatus->read() & ~SSTATUS_MS) | SSTATUS_MS_INITIAL); \
+  } while (0)
 #define require_vector(alu) \
   do { \
     require_vector_vs; \
