@@ -1665,6 +1665,7 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
   }
 
   if (isa->has_any_matrix() || !strict) {
+    DEFINE_NOARG(mrelease);
     DISASM_INSN("msettilek", msettilek, 0, {&xrs1});
     DISASM_INSN("msettileki", msettileki, 0, {&m_uimm10});
     DISASM_INSN("msettilen", msettilen, 0, {&xrs1});
