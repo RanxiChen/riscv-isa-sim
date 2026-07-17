@@ -16,62 +16,94 @@ inline void ame_require(bool cond, insn_t insn)
     throw trap_illegal_instruction(insn.bits());
 }
 
-class AmeF64RowView
+template<typename T>
+class AmeRowView
 {
 public:
-  AmeF64RowView(MatrixReg& reg, reg_t row, reg_t length)
-    : reg(reg), row(row), length(length) {}
+  AmeRowView(MatrixReg& reg, reg_t row, reg_t length)
+    : reg(reg), row_index(row), length(length) {}
 
-  float64_t elt(reg_t col) const { return reg.elt<float64_t>(row, col); }
+  T elt(reg_t col) const { return reg.elt<T>(row_index, col); }
   reg_t size() const { return length; }
 
 private:
   MatrixReg& reg;
-  reg_t row;
+  reg_t row_index;
   reg_t length;
 };
 
-class AmeF64MatrixView
+template<typename T>
+class AmeMatrixView
 {
 public:
-  AmeF64MatrixView(MatrixReg& reg, reg_t row_length)
+  AmeMatrixView(MatrixReg& reg, reg_t row_length)
     : reg(reg), row_length(row_length) {}
 
-  AmeF64RowView row(reg_t index) const { return AmeF64RowView(reg, index, row_length); }
+  AmeRowView<T> row(reg_t index) const { return AmeRowView<T>(reg, index, row_length); }
 
 private:
   MatrixReg& reg;
   reg_t row_length;
 };
 
-struct AmeF64DotExpr
+template<typename T>
+struct AmeDotExpr
 {
-  AmeF64RowView lhs;
-  AmeF64RowView rhs;
+  AmeRowView<T> lhs;
+  AmeRowView<T> rhs;
 };
 
-inline AmeF64DotExpr vecdot(AmeF64RowView lhs, AmeF64RowView rhs)
+template<typename T>
+inline AmeDotExpr<T> vecdot(AmeRowView<T> lhs, AmeRowView<T> rhs)
 {
   return {lhs, rhs};
 }
 
-class AmeF64AccRef
+template<typename T>
+struct AmeFloatOps;
+
+template<>
+struct AmeFloatOps<float16_t>
+{
+  static float16_t mul_add(float16_t lhs, float16_t rhs, float16_t acc);
+};
+
+template<>
+struct AmeFloatOps<float32_t>
+{
+  static float32_t mul_add(float32_t lhs, float32_t rhs, float32_t acc);
+};
+
+template<>
+struct AmeFloatOps<float64_t>
+{
+  static float64_t mul_add(float64_t lhs, float64_t rhs, float64_t acc);
+};
+
+template<typename T>
+class AmeAccRef
 {
 public:
-  AmeF64AccRef(MatrixReg& reg, reg_t row, reg_t col)
-    : reg(reg), row(row), col(col) {}
+  AmeAccRef(MatrixReg& reg, reg_t row, reg_t col)
+    : reg(reg), row_index(row), col_index(col) {}
 
-  void operator+=(const AmeF64DotExpr& dot);
+  void operator+=(const AmeDotExpr<T>& dot)
+  {
+    T value = reg.elt<T>(row_index, col_index);
+    for (reg_t k = 0; k < dot.lhs.size(); ++k)
+      value = AmeFloatOps<T>::mul_add(dot.lhs.elt(k), dot.rhs.elt(k), value);
+    reg.elt<T>(row_index, col_index) = value;
+  }
 
 private:
   MatrixReg& reg;
-  reg_t row;
-  reg_t col;
+  reg_t row_index;
+  reg_t col_index;
 };
 
 void ame_set_matrix_fp_exceptions(ameUnit_t& AMU);
 
-#define AME_MFMACC_D_CORE(BODY) \
+#define AME_MFMACC_FP_CORE(TYPE, BITS, FEATURE, BODY) \
   do { \
     auto& AMU = p->AMU; \
     const reg_t md_field = insn.m_md(); \
@@ -80,47 +112,58 @@ void ame_set_matrix_fp_exceptions(ameUnit_t& AMU);
     ame_require(md_field >= 4 && md_field < 8, insn); \
     ame_require(ms1 < 4, insn); \
     ame_require(ms2 < 4, insn); \
-    ame_require(AMU.supports_xmisa_feature(ameUnit_t::xmisa_bit(ameUnit_t::XMISA_BIT_MMF64F64)), insn); \
-    ame_require(AMU.get_elen() >= 64, insn); \
+    ame_require(AMU.supports_xmisa_feature(ameUnit_t::xmisa_bit(FEATURE)), insn); \
+    ame_require(AMU.get_elen() >= BITS, insn); \
     ame_require(AMU.xmfrm_is_valid(AMU.get_xmfrm()), insn); \
     const reg_t M = AMU.mtilem->read(); \
     const reg_t N = AMU.mtilen->read(); \
     const reg_t K = AMU.mtilek->read(); \
     ame_require(M <= AMU.get_rownum(), insn); \
     ame_require(N <= AMU.get_rownum(), insn); \
-    ame_require(K <= AMU.get_trlen() / 64, insn); \
+    ame_require(K <= AMU.get_trlen() / BITS, insn); \
     softfloat_roundingMode = AMU.get_xmfrm(); \
     softfloat_exceptionFlags = 0; \
     MatrixReg& Areg = AMU.tile_regs[ms1]; \
     MatrixReg& Breg = AMU.tile_regs[ms2]; \
     MatrixReg& Creg = AMU.acc_regs[md_field - 4]; \
-    AmeF64MatrixView A(Areg, K); \
-    AmeF64MatrixView B(Breg, K); \
+    AmeMatrixView<TYPE> A(Areg, K); \
+    AmeMatrixView<TYPE> B(Breg, K); \
     for (reg_t i = 0; i < M; ++i) { \
       for (reg_t j = 0; j < N; ++j) { \
-        AmeF64AccRef Cij(Creg, i, j); \
+        AmeAccRef<TYPE> Cij(Creg, i, j); \
         BODY; \
       } \
     } \
-    const float64_t zero = {0}; \
+    const TYPE zero = {0}; \
     const reg_t acc_rows = Creg.get_rownum(); \
-    const reg_t acc_cols = Creg.get_row_bytes() / sizeof(float64_t); \
+    const reg_t acc_cols = Creg.get_row_bytes() / sizeof(TYPE); \
     for (reg_t i = 0; i < acc_rows; ++i) { \
       for (reg_t j = 0; j < acc_cols; ++j) { \
         if (i >= M || j >= N) \
-          Creg.elt<float64_t>(i, j) = zero; \
+          Creg.elt<TYPE>(i, j) = zero; \
       } \
     } \
     ame_set_matrix_fp_exceptions(AMU); \
   } while (0)
 
-#define AME_MFMACC_D(BODY) \
+#define AME_MFMACC_FP(TYPE, BITS, FEATURE, BODY) \
   do { \
     require_matrix_ms; \
-    AME_MFMACC_D_CORE(BODY); \
+    AME_MFMACC_FP_CORE(TYPE, BITS, FEATURE, BODY); \
     AME_END; \
   } while (0);
 
+#define AME_MFMACC_H(BODY) \
+  AME_MFMACC_FP(float16_t, 16, ameUnit_t::XMISA_BIT_MMF16F16, BODY)
+
+#define AME_MFMACC_S(BODY) \
+  AME_MFMACC_FP(float32_t, 32, ameUnit_t::XMISA_BIT_MMF32F32, BODY)
+
+#define AME_MFMACC_D(BODY) \
+  AME_MFMACC_FP(float64_t, 64, ameUnit_t::XMISA_BIT_MMF64F64, BODY)
+
+void execute_mfmacc_h(processor_t* p, insn_t insn);
+void execute_mfmacc_s(processor_t* p, insn_t insn);
 void execute_mfmacc_d(processor_t* p, insn_t insn);
 
 #endif

@@ -123,9 +123,12 @@ void ameUnit_t::set_mtilen(reg_t value)
 void ameUnit_t::reset()
 {
   xmisa_features = 0;
+  if (ELEN >= 16)
+    xmisa_features |= xmisa_bit(XMISA_BIT_MMF16F16);
+  if (ELEN >= 32)
+    xmisa_features |= xmisa_bit(XMISA_BIT_MMF32F32);
   if (ELEN >= 64)
     xmisa_features |= xmisa_bit(XMISA_BIT_MMF64F64);
-
   for (auto& reg : tile_regs)
     reg.reset(TLEN, TRLEN);
 
