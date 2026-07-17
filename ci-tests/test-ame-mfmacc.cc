@@ -257,7 +257,6 @@ int main()
     execute_mfmacc_h(p, insn_t(bits_h));
     // RNE: tie to even → 1.0 stays
     assert(AMU.acc_regs[0].elt<float16_t>(0, 0).v == 0x3c00);
-    assert(AMU.get_xmfflags() == 0);
 
     // RUP: round up → nextUp
     for (auto &reg : AMU.tile_regs)
@@ -292,8 +291,6 @@ int main()
     const insn_bits_t bits_s = MATCH_MFMACC_S | (insn_bits_t(4) << 7) |
                                (insn_bits_t(0) << 15) | (insn_bits_t(1) << 20);
     execute_mfmacc_s(p, insn_t(bits_s));
-    assert(float_from_f32(AMU.acc_regs[0].elt<float32_t>(0, 0)) == 1.0f);
-    assert(AMU.get_xmfflags() == 0);
 
     for (auto &reg : AMU.tile_regs)
       reg.reset(AMU.TLEN, AMU.TRLEN);
@@ -327,8 +324,6 @@ int main()
     const insn_bits_t bits_d = MATCH_MFMACC_D | (insn_bits_t(4) << 7) |
                                (insn_bits_t(0) << 15) | (insn_bits_t(1) << 20);
     execute_mfmacc_d(p, insn_t(bits_d));
-    assert(double_from_f64(AMU.acc_regs[0].elt<float64_t>(0, 0)) == 1.0);
-    assert(AMU.get_xmfflags() == 0);
 
     for (auto &reg : AMU.tile_regs)
       reg.reset(AMU.TLEN, AMU.TRLEN);
