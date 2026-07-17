@@ -110,6 +110,16 @@ void ameUnit_t::set_mtilem(reg_t value)
   mtilem->write_raw(value);
 }
 
+void ameUnit_t::set_mtilek(reg_t value)
+{
+  mtilek->write_raw(value);
+}
+
+void ameUnit_t::set_mtilen(reg_t value)
+{
+  mtilen->write_raw(value);
+}
+
 void ameUnit_t::reset()
 {
   for (auto& reg : tile_regs)

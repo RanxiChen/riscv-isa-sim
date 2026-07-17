@@ -197,6 +197,8 @@ public:
   reg_t get_alenb()   { return ALENB; }
 
   void set_mtilem(reg_t value);
+  void set_mtilek(reg_t value);
+  void set_mtilen(reg_t value);
 
   void reset();
 
