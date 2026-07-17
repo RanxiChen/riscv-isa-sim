@@ -47,7 +47,7 @@ int main()
   cfg_t cfg;
   cfg.isa = "RV64IMAFDCV";
   std::vector<device_factory_sargs_t> plugin_devices;
-  std::vector<std::string> htif_args;
+  std::vector<std::string> htif_args{"+permissive-off"};
   debug_module_config_t dm_config = {.progbufsize = 2,
                                      .max_sba_data_width = 0,
                                      .require_authentication = false,
