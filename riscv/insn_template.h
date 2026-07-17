@@ -9,5 +9,6 @@
 #include "tracer.h"
 #include "p_ext_macros.h"
 #include "v_ext_macros.h"
+#include "ame_macc.h"
 #include "debug_defines.h"
 #include <assert.h>

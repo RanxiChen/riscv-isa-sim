@@ -49,6 +49,7 @@ riscv_install_hdrs = \
 	triggers.h \
 	vector_unit.h \
 	ame_unit.h \
+	ame_macc.h \
 
 riscv_precompiled_hdrs = \
 	insn_template.h \
@@ -78,6 +79,7 @@ riscv_srcs = \
 	triggers.cc \
 	vector_unit.cc \
 	ame_unit.cc \
+	ame_macc.cc \
 	socketif.cc \
 	cfg.cc \
 	$(riscv_gen_srcs) \
@@ -865,6 +867,7 @@ riscv_insn_ext_v_ldst = \
 	vs8r_v \
 
 riscv_insn_ext_ame = \
+	mfmacc_d \
 	mrelease \
 	msettileki \
 	msettilek \

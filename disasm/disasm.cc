@@ -532,6 +532,24 @@ struct : public arg_t {
 } m_uimm10;
 
 struct : public arg_t {
+  std::string to_string(insn_t insn) const {
+    return "acc" + std::to_string(insn.m_md() - 4);
+  }
+} m_md;
+
+struct : public arg_t {
+  std::string to_string(insn_t insn) const {
+    return "tr" + std::to_string(insn.m_ms1());
+  }
+} m_ms1;
+
+struct : public arg_t {
+  std::string to_string(insn_t insn) const {
+    return "tr" + std::to_string(insn.m_ms2());
+  }
+} m_ms2;
+
+struct : public arg_t {
   std::string to_string(insn_t UNUSED insn) const {
     return "x0";
   }
@@ -1665,6 +1683,7 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
   }
 
   if (isa->has_any_matrix() || !strict) {
+    DISASM_INSN("mfmacc.d", mfmacc_d, 0, {&m_md, &m_ms2, &m_ms1});
     DEFINE_NOARG(mrelease);
     DISASM_INSN("msettilek", msettilek, 0, {&xrs1});
     DISASM_INSN("msettileki", msettileki, 0, {&m_uimm10});
