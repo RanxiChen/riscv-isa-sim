@@ -105,6 +105,11 @@ reg_t ameUnit_t::xmisa_miew_mask() const
   return reg_t(1) << (p->get_xlen() - 1);
 }
 
+void ameUnit_t::set_mtilem(reg_t value)
+{
+  mtilem->write_raw(value);
+}
+
 void ameUnit_t::reset()
 {
   for (auto& reg : tile_regs)

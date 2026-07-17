@@ -809,6 +809,8 @@ class matrix_csr_t : public basic_csr_t {
     : basic_csr_t(proc, addr, init) {}
 
   virtual void verify_permissions(insn_t insn, bool write) const override;
+  // Write without applying normal matrix CSR side effects.
+  void write_raw(const reg_t val) noexcept;
 
  protected:
   virtual bool unlogged_write(const reg_t val) noexcept override;

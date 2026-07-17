@@ -1760,6 +1760,12 @@ void matrix_csr_t::verify_permissions(insn_t insn, bool write) const {
   basic_csr_t::verify_permissions(insn, write);
 }
 
+void matrix_csr_t::write_raw(const reg_t val) noexcept {
+  const bool success = basic_csr_t::unlogged_write(val);
+  if (success)
+    log_write();
+}
+
 bool matrix_csr_t::unlogged_write(const reg_t val) noexcept {
   if (!riscv_ame_assume_ms_enabled)
     STATE.sstatus->dirty(SSTATUS_MS);

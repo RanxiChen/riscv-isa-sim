@@ -526,6 +526,12 @@ struct : public arg_t {
 } v_vtype;
 
 struct : public arg_t {
+  std::string to_string(insn_t insn) const {
+    return std::to_string(insn.m_uimm10());
+  }
+} m_uimm10;
+
+struct : public arg_t {
   std::string to_string(insn_t UNUSED insn) const {
     return "x0";
   }
@@ -1656,6 +1662,11 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
   if (ext_enabled(EXT_ZCMT)) {
     DISASM_INSN("cm.jt", cm_jalt, 0x380, {&rvcm_jt_index});
     DISASM_INSN("cm.jalt", cm_jalt, 0, {&rvcm_jt_index});
+  }
+
+  if (isa->has_any_matrix() || !strict) {
+    DISASM_INSN("msettilem", msettilem, 0, {&xrs1});
+    DISASM_INSN("msettilemi", msettilemi, 0, {&m_uimm10});
   }
 
   if (isa->has_any_vector() || !strict) {

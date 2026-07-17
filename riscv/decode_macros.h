@@ -192,6 +192,10 @@ extern bool riscv_ame_assume_ms_enabled;
     if (!riscv_ame_assume_ms_enabled) \
       STATE.sstatus->dirty(SSTATUS_MS); \
   } while (0)
+#define AME_END \
+  do { \
+    dirty_matrix_state; \
+  } while (0)
 #define set_matrix_state_initial \
   do { \
     if (!riscv_ame_assume_ms_enabled) \

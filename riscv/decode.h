@@ -151,6 +151,9 @@ public:
   uint64_t v_mew() { return x(28, 1); }
   uint64_t v_zimm6() { return x(15, 5) + (x(26, 1) << 5); }
 
+  // AME instruction fields
+  uint64_t m_uimm10() { return x(15, 10); }
+
   uint64_t p_imm8() { return x(16, 8); }
   uint64_t p_imm10csl() { return x(16, 9) + (x(15, 1) << 9); }
   uint64_t p_imm10csr() { return (x(24, 1) << 6) + (x(15, 9) << 7); }

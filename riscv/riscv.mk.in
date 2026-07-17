@@ -864,6 +864,10 @@ riscv_insn_ext_v_ldst = \
 	vs4r_v \
 	vs8r_v \
 
+riscv_insn_ext_ame = \
+	msettilemi \
+	msettilem \
+
 riscv_insn_ext_v_ctrl = \
 	vsetivli \
 	vsetvli \
@@ -1770,6 +1774,7 @@ riscv_insn_list = \
 	$(riscv_insn_ext_m) \
 	$(riscv_insn_ext_b) \
 	$(riscv_insn_ext_a) \
+	$(riscv_insn_ext_ame) \
 	$(if $(HAVE_INT128),$(riscv_insn_ext_v),) \
 	$(riscv_insn_ext_zvfofp4min) \
 	$(riscv_insn_ext_zvfofp8min) \
