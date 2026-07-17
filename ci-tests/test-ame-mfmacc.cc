@@ -63,7 +63,21 @@ int main()
 
   processor_t *p = sim.get_core(0);
   auto &AMU = p->AMU;
-  assert(AMU.get_elen() >= 64);
+  AMU.ELEN = 64;
+  AMU.TLEN = 512;
+  AMU.TRLEN = 128;
+  AMU.ROWNUM = AMU.TLEN / AMU.TRLEN;
+  AMU.TLENB = AMU.TLEN / 8;
+  AMU.TRLENB = AMU.TRLEN / 8;
+  AMU.ARLEN = AMU.ROWNUM * AMU.ELEN;
+  AMU.ALEN = AMU.ARLEN * AMU.ROWNUM;
+  AMU.ARLENB = AMU.ARLEN / 8;
+  AMU.ALENB = AMU.ALEN / 8;
+  AMU.xmisa_features |= ameUnit_t::xmisa_bit(ameUnit_t::XMISA_BIT_MMF64F64);
+  for (auto &reg : AMU.tile_regs)
+    reg.reset(AMU.TLEN, AMU.TRLEN);
+  for (auto &reg : AMU.acc_regs)
+    reg.reset(AMU.ALEN, AMU.ARLEN);
 
   AMU.set_mtilem(2);
   AMU.set_mtilen(2);
