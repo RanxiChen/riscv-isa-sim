@@ -1695,6 +1695,10 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
     DISASM_INSN("mfmacc.bf16.e5", mfmacc_bf16_e5, 0, {&m_md, &m_ms2, &m_ms1});
     DISASM_INSN("mfmacc.s.e4", mfmacc_s_e4, 0, {&m_md, &m_ms2, &m_ms1});
     DISASM_INSN("mfmacc.s.e5", mfmacc_s_e5, 0, {&m_md, &m_ms2, &m_ms1});
+    DISASM_INSN("mmacc.w.b",   mmacc_w_b,   0, {&m_md, &m_ms1, &m_ms2});
+    DISASM_INSN("mmaccu.w.b",  mmaccu_w_b,  0, {&m_md, &m_ms1, &m_ms2});
+    DISASM_INSN("mmaccus.w.b", mmaccus_w_b, 0, {&m_md, &m_ms1, &m_ms2});
+    DISASM_INSN("mmaccsu.w.b", mmaccsu_w_b, 0, {&m_md, &m_ms1, &m_ms2});
     DEFINE_NOARG(mrelease);
     DISASM_INSN("msettilek", msettilek, 0, {&xrs1});
     DISASM_INSN("msettileki", msettileki, 0, {&m_uimm10});

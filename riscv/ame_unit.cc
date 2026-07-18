@@ -129,6 +129,8 @@ void ameUnit_t::reset()
     xmisa_features |= xmisa_bit(XMISA_BIT_MMF32F32);
   if (ELEN >= 64)
     xmisa_features |= xmisa_bit(XMISA_BIT_MMF64F64);
+  if (ELEN >= 32)
+    xmisa_features |= xmisa_bit(XMISA_BIT_MMI8I32);
   if (ELEN >= 16)
     xmisa_features |= xmisa_bit(XMISA_BIT_MMF8F16);
   if (ELEN >= 16)

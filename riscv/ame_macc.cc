@@ -155,3 +155,31 @@ void execute_mfmacc_s_e5(processor_t* p, insn_t insn)
     Cij += vecdot(A.row(i), B.row(j));
   }));
 }
+
+void execute_mmacc_w_b(processor_t* p, insn_t insn)
+{
+  AME_MMACC_IMPL(I32, I8, I8, XMISA_BIT_MMI8I32, ({
+    Cij += vecdot(A.row(i), B.row(j));
+  }));
+}
+
+void execute_mmaccu_w_b(processor_t* p, insn_t insn)
+{
+  AME_MMACC_IMPL(I32, U8, U8, XMISA_BIT_MMI8I32, ({
+    Cij += vecdot(A.row(i), B.row(j));
+  }));
+}
+
+void execute_mmaccus_w_b(processor_t* p, insn_t insn)
+{
+  AME_MMACC_IMPL(I32, U8, I8, XMISA_BIT_MMI8I32, ({
+    Cij += vecdot(A.row(i), B.row(j));
+  }));
+}
+
+void execute_mmaccsu_w_b(processor_t* p, insn_t insn)
+{
+  AME_MMACC_IMPL(I32, I8, U8, XMISA_BIT_MMI8I32, ({
+    Cij += vecdot(A.row(i), B.row(j));
+  }));
+}
