@@ -139,6 +139,7 @@ float8_t softfloat_roundPackToE5M2( bool, int_fast16_t, uint_fast16_t, bool );
 
 struct exp8_sig16 { int_fast8_t exp; uint_fast16_t sig; };
 struct exp8_sig16 softfloat_normSubnormalF16Sig( uint_fast16_t );
+struct exp8_sig16 softfloat_normSubnormalBF16Sig( uint_fast16_t );
 
 float16_t softfloat_roundPackToF16( bool, int_fast16_t, uint_fast16_t );
 float16_t softfloat_normRoundPackToF16( bool, int_fast16_t, uint_fast16_t );

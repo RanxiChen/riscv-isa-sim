@@ -129,7 +129,7 @@ struct commonNaN { char _unused; };
 | location pointed to by `zPtr'.
 *----------------------------------------------------------------------------*/
 #define softfloat_E4M3UIToCommonNaN( uiA, zPtr ) (void) (uiA), (void) (zPtr)
-#define softfloat_E5M2UIToCommonNaN( uiA, zPtr ) (void) (uiA), (void) (zPtr)
+#define softfloat_E5M2UIToCommonNaN( uiA, zPtr ) if ( ! ((uiA) & 0x2) ) (void) (zPtr), softfloat_raiseFlags( softfloat_flag_invalid )
 
 /*----------------------------------------------------------------------------
 | Assuming `uiA' has the bit pattern of a 16-bit floating-point NaN, converts
@@ -146,6 +146,8 @@ struct commonNaN { char _unused; };
 | exception is raised.
 *----------------------------------------------------------------------------*/
 #define softfloat_bf16UIToCommonNaN( uiA, zPtr ) if ( ! ((uiA) & 0x040) ) (void) (zPtr), softfloat_raiseFlags( softfloat_flag_invalid )
+uint_fast16_t
+ softfloat_propagateNaNBF16UI( uint_fast16_t uiA, uint_fast16_t uiB );
 
 /*----------------------------------------------------------------------------
 | Converts the common NaN pointed to by `aPtr' into a binary 16-bit floating-point

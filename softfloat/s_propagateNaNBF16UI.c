@@ -1,10 +1,9 @@
-
 /*============================================================================
 
 This C source file is part of the SoftFloat IEEE Floating-Point Arithmetic
 Package, Release 3d, by John R. Hauser.
 
-Copyright 2011, 2012, 2013, 2014, 2015 The Regents of the University of
+Copyright 2011, 2012, 2013, 2014, 2015, 2016 The Regents of the University of
 California.  All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -41,55 +40,29 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "specialize.h"
 #include "softfloat.h"
 
-float16_t e5m2_to_f16( float8_t a )
+/*----------------------------------------------------------------------------
+| Interpreting `uiA' and `uiB' as the bit patterns of two BF16 floating-
+| point values, at least one of which is a NaN, returns the bit pattern of
+| the combined NaN result.  If either `uiA' or `uiB' has the pattern of a
+| signaling NaN, the invalid exception is raised.
+*----------------------------------------------------------------------------*/
+uint_fast16_t
+ softfloat_propagateNaNBF16UI( uint_fast16_t uiA, uint_fast16_t uiB )
 {
-    union ui8_f8 uA;
-    uint_fast8_t uiA;
-    bool sign;
-    int_fast8_t exp;
-    uint_fast8_t frac;
-    struct commonNaN commonNaN;
-    uint_fast16_t uiZ;
-    union ui16_f16 uZ;
+    bool isSigNaNA = softfloat_isSigNaNBF16UI( uiA );
+    bool isSigNaNB = softfloat_isSigNaNBF16UI( uiB );
+    bool isNaNA = isNaNBF16UI( uiA );
+    bool isNaNB = isNaNBF16UI( uiB );
 
-    /*------------------------------------------------------------------------
-    *------------------------------------------------------------------------*/
-    uA.f = a;
-    uiA = uA.ui;
-    sign = signE5M2UI( uiA );
-    exp  = expE5M2UI( uiA );
-    frac = fracE5M2UI( uiA );
-    /*------------------------------------------------------------------------
-    *------------------------------------------------------------------------*/
-    if ( exp == 0x1F ) {
-        if ( frac ) {
-            /* NaN */
-            softfloat_E5M2UIToCommonNaN( uiA, &commonNaN );
-            uiZ = softfloat_commonNaNToF16UI( &commonNaN );
-        } else {
-            /* Inf */
-            uiZ = packToF16UI( sign, 0x1F, 0 );
-        }
-        goto uiZ;
+    if ( isSigNaNA || isSigNaNB ) {
+        softfloat_raiseFlags( softfloat_flag_invalid );
     }
-    /*------------------------------------------------------------------------
-    *------------------------------------------------------------------------*/
-    if ( ! exp ) {
-        if ( ! frac ) {
-            /* zero */
-            uiZ = packToF16UI( sign, 0, 0 );
-            goto uiZ;
-        }
-        /* subnormal: E5M2 and F16 share the same subnormal exponent bias */
-        uiZ = packToF16UI( sign, 0, (uint_fast16_t) frac << 8 );
-        goto uiZ;
+    if ( isNaNA ) {
+        return (uiA & 0x0040) ? uiA : (uiA | 0x0040);
     }
-    /*------------------------------------------------------------------------
-    *------------------------------------------------------------------------*/
-    uiZ = packToF16UI( sign, exp, (uint_fast16_t) frac<<8);
- uiZ:
-    uZ.ui = uiZ;
-    return uZ.f;
+    if ( isNaNB ) {
+        return (uiB & 0x0040) ? uiB : (uiB | 0x0040);
+    }
+    return defaultNaNBF16UI;
 
 }
-

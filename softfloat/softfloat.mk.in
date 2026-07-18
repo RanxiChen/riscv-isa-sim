@@ -200,11 +200,13 @@ softfloat_c_srcs = \
 	s_normSubnormalE4M3Sig.c \
 	s_normSubnormalE5M2Sig.c \
 	s_normSubnormalF16Sig.c \
+	s_normSubnormalBF16Sig.c \
 	s_normSubnormalF32Sig.c \
 	s_normSubnormalF64Sig.c \
 	softfloat_raiseFlags.c \
 	softfloat_state.c \
 	s_propagateNaNF16UI.c \
+	s_propagateNaNBF16UI.c \
 	s_propagateNaNF32UI.c \
 	s_propagateNaNF64UI.c \
 	s_propagateNaNF128UI.c \

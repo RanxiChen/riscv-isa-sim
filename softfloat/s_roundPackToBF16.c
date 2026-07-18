@@ -71,7 +71,7 @@ bfloat16_t
             *----------------------------------------------------------------*/
             isTiny =
                 (softfloat_detectTininess == softfloat_tininess_beforeRounding)
-                    || (exp < -1) || (sig + roundIncrement < 0x8000);
+                    || (exp < -1) || (sig + (roundIncrement << (-exp)) < 0x8000);
             sig = softfloat_shiftRightJam32( sig, -exp );
             exp = 0;
             roundBits = sig & 0x7F;
@@ -81,9 +81,13 @@ bfloat16_t
         } else if ( (0xFD < exp) || (0x8000 <= sig + roundIncrement) ) {
             /*----------------------------------------------------------------
             *----------------------------------------------------------------*/
-            softfloat_raiseFlags(
-                softfloat_flag_overflow | softfloat_flag_inexact );
             uiZ = packToBF16UI( sign, 0xFF, 0 ) - ! roundIncrement;
+            if ( (uiZ & 0x7F80) == 0x7F80 ) {
+                softfloat_raiseFlags(
+                    softfloat_flag_overflow | softfloat_flag_inexact );
+            } else {
+                softfloat_raiseFlags( softfloat_flag_inexact );
+            }
             goto uiZ;
         }
     }
