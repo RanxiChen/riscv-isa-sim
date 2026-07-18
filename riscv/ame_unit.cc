@@ -129,6 +129,18 @@ void ameUnit_t::reset()
     xmisa_features |= xmisa_bit(XMISA_BIT_MMF32F32);
   if (ELEN >= 64)
     xmisa_features |= xmisa_bit(XMISA_BIT_MMF64F64);
+  if (ELEN >= 16)
+    xmisa_features |= xmisa_bit(XMISA_BIT_MMF8F16);
+  if (ELEN >= 16)
+    xmisa_features |= xmisa_bit(XMISA_BIT_MMF8BF16);
+  if (ELEN >= 32)
+    xmisa_features |= xmisa_bit(XMISA_BIT_MMF16F32);
+  if (ELEN >= 32)
+    xmisa_features |= xmisa_bit(XMISA_BIT_MMBF16F32);
+  if (ELEN >= 32)
+    xmisa_features |= xmisa_bit(XMISA_BIT_MMF8F32);
+  if (ELEN >= 64)
+    xmisa_features |= xmisa_bit(XMISA_BIT_MMF32F64);
   for (auto& reg : tile_regs)
     reg.reset(TLEN, TRLEN);
 

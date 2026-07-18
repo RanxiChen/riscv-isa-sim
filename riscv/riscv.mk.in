@@ -870,6 +870,15 @@ riscv_insn_ext_ame = \
 	mfmacc_h \
 	mfmacc_s \
 	mfmacc_d \
+	mfmacc_s_h \
+	mfmacc_s_bf16 \
+	mfmacc_d_s \
+	mfmacc_h_e4 \
+	mfmacc_h_e5 \
+	mfmacc_bf16_e4 \
+	mfmacc_bf16_e5 \
+	mfmacc_s_e4 \
+	mfmacc_s_e5 \
 	mrelease \
 	msettileki \
 	msettilek \
