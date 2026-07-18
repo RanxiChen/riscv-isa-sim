@@ -550,6 +550,20 @@ struct : public arg_t {
 } m_ms2;
 
 struct : public arg_t {
+  std::string to_string(insn_t insn) const {
+    return "tr" + std::to_string(insn.m_md());
+  }
+} m_tile_reg;
+
+struct : public arg_t {
+  std::string to_string(insn_t insn) const {
+    reg_t raw = insn.m_md();
+    if (raw < 4 || raw >= 8) return "?";
+    return "acc" + std::to_string(raw - 4);
+  }
+} m_acc_reg;
+
+struct : public arg_t {
   std::string to_string(insn_t UNUSED insn) const {
     return "x0";
   }
@@ -1699,6 +1713,54 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
     DISASM_INSN("mmaccu.w.b",  mmaccu_w_b,  0, {&m_md, &m_ms1, &m_ms2});
     DISASM_INSN("mmaccus.w.b", mmaccus_w_b, 0, {&m_md, &m_ms1, &m_ms2});
     DISASM_INSN("mmaccsu.w.b", mmaccsu_w_b, 0, {&m_md, &m_ms1, &m_ms2});
+    DISASM_INSN("mlae8",  mlae8,  0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msae8",  msae8,  0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlate8", mlate8, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msate8", msate8, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlae16", mlae16, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlae32", mlae32, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlae64", mlae64, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlbe8", mlbe8, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlbe16", mlbe16, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlbe32", mlbe32, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlbe64", mlbe64, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlce8", mlce8, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlce16", mlce16, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlce32", mlce32, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlce64", mlce64, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msae16", msae16, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msae32", msae32, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msae64", msae64, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msbe8", msbe8, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msbe16", msbe16, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msbe32", msbe32, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msbe64", msbe64, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msce8", msce8, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msce16", msce16, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msce32", msce32, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msce64", msce64, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlate16", mlate16, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlate32", mlate32, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlate64", mlate64, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlbte8", mlbte8, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlbte16", mlbte16, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlbte32", mlbte32, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlbte64", mlbte64, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlcte8", mlcte8, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlcte16", mlcte16, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlcte32", mlcte32, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlcte64", mlcte64, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msate16", msate16, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msate32", msate32, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msate64", msate64, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msbte8", msbte8, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msbte16", msbte16, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msbte32", msbte32, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("msbte64", msbte64, 0, {&m_tile_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mscte8", mscte8, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mscte16", mscte16, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mscte32", mscte32, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mscte64", mscte64, 0, {&m_acc_reg, &base_only_address, &xrs2});
     DEFINE_NOARG(mrelease);
     DISASM_INSN("msettilek", msettilek, 0, {&xrs1});
     DISASM_INSN("msettileki", msettileki, 0, {&m_uimm10});
