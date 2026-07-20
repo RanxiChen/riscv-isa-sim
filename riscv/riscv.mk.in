@@ -50,6 +50,7 @@ riscv_install_hdrs = \
 	vector_unit.h \
 	ame_unit.h \
 	ame_macc.h \
+	ame_mem.h \
 
 riscv_precompiled_hdrs = \
 	insn_template.h \
@@ -80,6 +81,7 @@ riscv_srcs = \
 	vector_unit.cc \
 	ame_unit.cc \
 	ame_macc.cc \
+	ame_mem.cc \
 	socketif.cc \
 	cfg.cc \
 	$(riscv_gen_srcs) \
@@ -870,6 +872,19 @@ riscv_insn_ext_ame = \
 	mfmacc_h \
 	mfmacc_s \
 	mfmacc_d \
+	mfmacc_s_h \
+	mfmacc_s_bf16 \
+	mfmacc_d_s \
+	mfmacc_h_e4 \
+	mfmacc_h_e5 \
+	mfmacc_bf16_e4 \
+	mfmacc_bf16_e5 \
+	mfmacc_s_e4 \
+	mfmacc_s_e5 \
+	mmacc_w_b \
+	mmaccu_w_b \
+	mmaccus_w_b \
+	mmaccsu_w_b \
 	mrelease \
 	msettileki \
 	msettilek \
@@ -877,6 +892,54 @@ riscv_insn_ext_ame = \
 	msettilen \
 	msettilemi \
 	msettilem \
+	mlae8 \
+	msae8 \
+	mlate8 \
+	msate8 \
+	mlae16 \
+	mlae32 \
+	mlae64 \
+	mlbe8 \
+	mlbe16 \
+	mlbe32 \
+	mlbe64 \
+	mlce8 \
+	mlce16 \
+	mlce32 \
+	mlce64 \
+	msae16 \
+	msae32 \
+	msae64 \
+	msbe8 \
+	msbe16 \
+	msbe32 \
+	msbe64 \
+	msce8 \
+	msce16 \
+	msce32 \
+	msce64 \
+	mlate16 \
+	mlate32 \
+	mlate64 \
+	mlbte8 \
+	mlbte16 \
+	mlbte32 \
+	mlbte64 \
+	mlcte8 \
+	mlcte16 \
+	mlcte32 \
+	mlcte64 \
+	msate16 \
+	msate32 \
+	msate64 \
+	msbte8 \
+	msbte16 \
+	msbte32 \
+	msbte64 \
+	mscte8 \
+	mscte16 \
+	mscte32 \
+	mscte64
 
 riscv_insn_ext_v_ctrl = \
 	vsetivli \
