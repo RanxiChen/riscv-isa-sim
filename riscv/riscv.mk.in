@@ -916,6 +916,27 @@ riscv_insn_ext_ame = \
 	mcslideup_h \
 	mcslideup_w \
 	mcslideup_d \
+	madd_w_mm \
+	madd_w_mv_i \
+	msub_w_mm \
+	msub_w_mv_i \
+	mmul_w_mm \
+	mmul_w_mv_i \
+	mmulh_w_mm \
+	mmulh_w_mv_i \
+	mmax_w_mm \
+	mmax_w_mv_i \
+	mumax_w_mm \
+	mumax_w_mv_i \
+	mmin_w_mm \
+	mmin_w_mv_i \
+	mumin_w_mm \
+	mumin_w_mv_i \
+	msrl_w_mm \
+	msrl_w_mv_i \
+	msll_w_mm \
+	msll_w_mv_i \
+	msra_w_mm \
 	mcbce8_mv_i \
 	mcbce16_mv_i \
 	mcbce32_mv_i \

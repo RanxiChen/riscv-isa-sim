@@ -359,4 +359,98 @@ ame_pack_columns(MatrixReg& dst,
     AME_END;                                                            \
   } while (0)
 
+static inline int32_t
+ame_int_sat_addsub(int64_t value, ameUnit_t& AMU)
+{
+  if (AMU.xmsaten_enabled()) {
+    if (value > INT32_MAX)
+      return INT32_MAX;
+    if (value < INT32_MIN)
+      return INT32_MIN;
+  }
+  return static_cast<int32_t>(static_cast<uint32_t>(value));
+}
+
+static inline int32_t
+ame_int_mul_low(int32_t a, int32_t b)
+{
+  const int64_t product = static_cast<int64_t>(a) * static_cast<int64_t>(b);
+  return static_cast<int32_t>(static_cast<uint32_t>(product));
+}
+
+static inline int32_t
+ame_int_mul_high(int32_t a, int32_t b)
+{
+  const int64_t product = static_cast<int64_t>(a) * static_cast<int64_t>(b);
+  return static_cast<int32_t>(product >> 32);
+}
+
+#define AME_INT_EWISE_SETUP(BODY)                                      \
+  do {                                                                  \
+    require_matrix_ms;                                                  \
+    require(P.AMU.get_xmisa() & P.AMU.xmisa_miew_mask());              \
+    require(P.AMU.supports_xmisa_feature(                               \
+      ameUnit_t::xmisa_bit(ameUnit_t::XMISA_BIT_MMI8I32)));             \
+    const reg_t dstIndex = insn.m_md();                                 \
+    const reg_t ms1Index = insn.m_ms1();                                \
+    const reg_t ms2Index = insn.m_ms2();                                \
+    require(dstIndex >= 4 && dstIndex < 8);                             \
+    require(ms1Index >= 4 && ms1Index < 8);                             \
+    require(ms2Index >= 4 && ms2Index < 8);                             \
+    MatrixReg& md = P.AMU.acc_regs[dstIndex - 4];                       \
+    MatrixReg& ms1 = P.AMU.acc_regs[ms1Index - 4];                      \
+    MatrixReg& ms2 = P.AMU.acc_regs[ms2Index - 4];                      \
+    require(md.get_rownum() == ms1.get_rownum());                       \
+    require(md.get_rownum() == ms2.get_rownum());                       \
+    require(md.get_row_bytes() == ms1.get_row_bytes());                 \
+    require(md.get_row_bytes() == ms2.get_row_bytes());                 \
+    const reg_t rows = md.get_rownum();                                 \
+    const reg_t cols = md.get_row_bytes() / sizeof(int32_t);             \
+    require(cols != 0 && (cols & (cols - 1)) == 0);                     \
+    for (reg_t i = 0; i < rows; ++i) {                                  \
+      for (reg_t j = 0; j < cols; ++j) {                                \
+        int32_t& Cij = md.elt<int32_t>(i, j);                            \
+        const int32_t Aij = ms2.elt<int32_t>(i, j);                     \
+        const int32_t Bij = ms1.elt<int32_t>(i, j);                     \
+        BODY;                                                            \
+      }                                                                  \
+    }                                                                    \
+    AME_END;                                                             \
+  } while (0)
+
+#define AME_INT_EWISE_MV_SETUP(BODY)                                   \
+  do {                                                                  \
+    require_matrix_ms;                                                  \
+    require(P.AMU.get_xmisa() & P.AMU.xmisa_miew_mask());              \
+    require(P.AMU.supports_xmisa_feature(                               \
+      ameUnit_t::xmisa_bit(ameUnit_t::XMISA_BIT_MMI8I32)));             \
+    const reg_t dstIndex = insn.m_md();                                 \
+    const reg_t ms1Index = insn.m_ms1();                                \
+    const reg_t ms2Index = insn.m_ms2();                                \
+    require(dstIndex >= 4 && dstIndex < 8);                             \
+    require(ms1Index >= 4 && ms1Index < 8);                             \
+    require(ms2Index >= 4 && ms2Index < 8);                             \
+    MatrixReg& md = P.AMU.acc_regs[dstIndex - 4];                       \
+    MatrixReg& ms1 = P.AMU.acc_regs[ms1Index - 4];                      \
+    MatrixReg& ms2 = P.AMU.acc_regs[ms2Index - 4];                      \
+    require(md.get_rownum() == ms1.get_rownum());                       \
+    require(md.get_rownum() == ms2.get_rownum());                       \
+    require(md.get_row_bytes() == ms1.get_row_bytes());                 \
+    require(md.get_row_bytes() == ms2.get_row_bytes());                 \
+    const reg_t rows = md.get_rownum();                                 \
+    const reg_t cols = md.get_row_bytes() / sizeof(int32_t);             \
+    require(cols != 0 && (cols & (cols - 1)) == 0);                     \
+    const reg_t row = insn.m_uimm3();                                   \
+    require(row < rows);                                                \
+    for (reg_t i = 0; i < rows; ++i) {                                  \
+      for (reg_t j = 0; j < cols; ++j) {                                \
+        int32_t& Cij = md.elt<int32_t>(i, j);                            \
+        const int32_t Aij = ms2.elt<int32_t>(i, j);                     \
+        const int32_t Bij = ms1.elt<int32_t>(row, j);                   \
+        BODY;                                                            \
+      }                                                                  \
+    }                                                                    \
+    AME_END;                                                             \
+  } while (0)
+
 #endif
