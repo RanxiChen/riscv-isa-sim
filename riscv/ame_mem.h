@@ -73,7 +73,9 @@
 // ── whole-register load/store: physical rows, contiguous memory ─────────
 #define AME_MATRIX_WHOLE_LDST(EW, BODY)                                    \
   do {                                                                     \
-    require_matrix_ms;                                                     \
+    ame_require(riscv_ame_assume_ms_enabled ||                             \
+                (p->get_isa().has_any_matrix() &&                          \
+                 STATE.sstatus->enabled(SSTATUS_MS)), insn);               \
     auto& AMU = p->AMU;                                                    \
     const reg_t rawReg = insn.m_md();                                      \
     MatrixReg& R = rawReg < 4                                              \
