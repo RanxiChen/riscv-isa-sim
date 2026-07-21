@@ -1,5 +1,5 @@
 // mlce32 tr, (rs1), rs2
-AME_MATRIX_LOAD_C_E32_NORMAL
-({
-  Rij = Memory[base + i * stride + j * elementBytes];
+AME_MATRIX_LDST(C, E32, {
+  Rij = MMU.load<uint32_t>(
+      base + i * stride + j * elementBytes);
 })

@@ -1,5 +1,5 @@
 // mlce8 tr, (rs1), rs2
-AME_MATRIX_LOAD_C_E8_NORMAL
-({
-  Rij = Memory[base + i * stride + j * elementBytes];
+AME_MATRIX_LDST(C, E8, {
+  Rij = MMU.load<uint8_t>(
+      base + i * stride + j * elementBytes);
 })

@@ -1,5 +1,5 @@
 // msae32 tr, (rs1), rs2
-AME_MATRIX_STORE_A_E32_NORMAL
-({
-  Memory[base + i * stride + j * elementBytes] = Rij;
+AME_MATRIX_LDST(A, E32, {
+  MMU.store<uint32_t>(
+      base + i * stride + j * elementBytes, Rij);
 })

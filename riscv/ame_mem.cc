@@ -5,9 +5,9 @@
 // ── A normal load ──────────────────────────────────────────────────────────
 #define DEF_LOAD_A(NUM)                                                         \
 void execute_mlae##NUM(processor_t* p, insn_t insn) {                           \
-  AME_MATRIX_MEM_CORE(A, E##NUM, ({                                                \
-    Rij = Memory[base + i * stride + j * elementBytes];                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(A, E##NUM, {                                                \
+    Rij = MMU.load<uint##NUM##_t>(base + i * stride + j * elementBytes);                        \
+  });                                                                         \
 }
 DEF_LOAD_A(8)
 DEF_LOAD_A(16)
@@ -18,9 +18,9 @@ DEF_LOAD_A(64)
 // ── B normal load ──────────────────────────────────────────────────────────
 #define DEF_LOAD_B(NUM)                                                         \
 void execute_mlbe##NUM(processor_t* p, insn_t insn) {                           \
-  AME_MATRIX_MEM_CORE(B, E##NUM, ({                                                \
-    Rij = Memory[base + i * stride + j * elementBytes];                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(B, E##NUM, {                                                \
+    Rij = MMU.load<uint##NUM##_t>(base + i * stride + j * elementBytes);                        \
+  });                                                                         \
 }
 DEF_LOAD_B(8)
 DEF_LOAD_B(16)
@@ -31,9 +31,9 @@ DEF_LOAD_B(64)
 // ── C normal load ──────────────────────────────────────────────────────────
 #define DEF_LOAD_C(NUM)                                                         \
 void execute_mlce##NUM(processor_t* p, insn_t insn) {                           \
-  AME_MATRIX_MEM_CORE(C, E##NUM, ({                                                \
-    Rij = Memory[base + i * stride + j * elementBytes];                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(C, E##NUM, {                                                \
+    Rij = MMU.load<uint##NUM##_t>(base + i * stride + j * elementBytes);                        \
+  });                                                                         \
 }
 DEF_LOAD_C(8)
 DEF_LOAD_C(16)
@@ -44,9 +44,9 @@ DEF_LOAD_C(64)
 // ── A normal store ─────────────────────────────────────────────────────────
 #define DEF_STORE_A(NUM)                                                        \
 void execute_msae##NUM(processor_t* p, insn_t insn) {                           \
-  AME_MATRIX_MEM_CORE(A, E##NUM, ({                                                \
-    Memory[base + i * stride + j * elementBytes] = Rij;                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(A, E##NUM, {                                                \
+    MMU.store<uint##NUM##_t>(base + i * stride + j * elementBytes, Rij);                        \
+  });                                                                         \
 }
 DEF_STORE_A(8)
 DEF_STORE_A(16)
@@ -57,9 +57,9 @@ DEF_STORE_A(64)
 // ── B normal store ─────────────────────────────────────────────────────────
 #define DEF_STORE_B(NUM)                                                        \
 void execute_msbe##NUM(processor_t* p, insn_t insn) {                           \
-  AME_MATRIX_MEM_CORE(B, E##NUM, ({                                                \
-    Memory[base + i * stride + j * elementBytes] = Rij;                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(B, E##NUM, {                                                \
+    MMU.store<uint##NUM##_t>(base + i * stride + j * elementBytes, Rij);                        \
+  });                                                                         \
 }
 DEF_STORE_B(8)
 DEF_STORE_B(16)
@@ -70,9 +70,9 @@ DEF_STORE_B(64)
 // ── C normal store ─────────────────────────────────────────────────────────
 #define DEF_STORE_C(NUM)                                                        \
 void execute_msce##NUM(processor_t* p, insn_t insn) {                           \
-  AME_MATRIX_MEM_CORE(C, E##NUM, ({                                                \
-    Memory[base + i * stride + j * elementBytes] = Rij;                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(C, E##NUM, {                                                \
+    MMU.store<uint##NUM##_t>(base + i * stride + j * elementBytes, Rij);                        \
+  });                                                                         \
 }
 DEF_STORE_C(8)
 DEF_STORE_C(16)
@@ -83,9 +83,9 @@ DEF_STORE_C(64)
 // ── A transposed load ──────────────────────────────────────────────────────
 #define DEF_LOAD_AT(NUM)                                                        \
 void execute_mlate##NUM(processor_t* p, insn_t insn) {                          \
-  AME_MATRIX_MEM_CORE(A, E##NUM, ({                                                \
-    Rij = Memory[base + j * stride + i * elementBytes];                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(A, E##NUM, {                                                \
+    Rij = MMU.load<uint##NUM##_t>(base + j * stride + i * elementBytes);                        \
+  });                                                                         \
 }
 DEF_LOAD_AT(8)
 DEF_LOAD_AT(16)
@@ -96,9 +96,9 @@ DEF_LOAD_AT(64)
 // ── B transposed load ──────────────────────────────────────────────────────
 #define DEF_LOAD_BT(NUM)                                                        \
 void execute_mlbte##NUM(processor_t* p, insn_t insn) {                          \
-  AME_MATRIX_MEM_CORE(B, E##NUM, ({                                                \
-    Rij = Memory[base + j * stride + i * elementBytes];                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(B, E##NUM, {                                                \
+    Rij = MMU.load<uint##NUM##_t>(base + j * stride + i * elementBytes);                        \
+  });                                                                         \
 }
 DEF_LOAD_BT(8)
 DEF_LOAD_BT(16)
@@ -109,9 +109,9 @@ DEF_LOAD_BT(64)
 // ── C transposed load ──────────────────────────────────────────────────────
 #define DEF_LOAD_CT(NUM)                                                        \
 void execute_mlcte##NUM(processor_t* p, insn_t insn) {                          \
-  AME_MATRIX_MEM_CORE(C, E##NUM, ({                                                \
-    Rij = Memory[base + j * stride + i * elementBytes];                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(C, E##NUM, {                                                \
+    Rij = MMU.load<uint##NUM##_t>(base + j * stride + i * elementBytes);                        \
+  });                                                                         \
 }
 DEF_LOAD_CT(8)
 DEF_LOAD_CT(16)
@@ -122,9 +122,9 @@ DEF_LOAD_CT(64)
 // ── A transposed store ─────────────────────────────────────────────────────
 #define DEF_STORE_AT(NUM)                                                       \
 void execute_msate##NUM(processor_t* p, insn_t insn) {                          \
-  AME_MATRIX_MEM_CORE(A, E##NUM, ({                                                \
-    Memory[base + j * stride + i * elementBytes] = Rij;                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(A, E##NUM, {                                                \
+    MMU.store<uint##NUM##_t>(base + j * stride + i * elementBytes, Rij);                        \
+  });                                                                         \
 }
 DEF_STORE_AT(8)
 DEF_STORE_AT(16)
@@ -135,9 +135,9 @@ DEF_STORE_AT(64)
 // ── B transposed store ─────────────────────────────────────────────────────
 #define DEF_STORE_BT(NUM)                                                       \
 void execute_msbte##NUM(processor_t* p, insn_t insn) {                          \
-  AME_MATRIX_MEM_CORE(B, E##NUM, ({                                                \
-    Memory[base + j * stride + i * elementBytes] = Rij;                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(B, E##NUM, {                                                \
+    MMU.store<uint##NUM##_t>(base + j * stride + i * elementBytes, Rij);                        \
+  });                                                                         \
 }
 DEF_STORE_BT(8)
 DEF_STORE_BT(16)
@@ -148,9 +148,9 @@ DEF_STORE_BT(64)
 // ── C transposed store ─────────────────────────────────────────────────────
 #define DEF_STORE_CT(NUM)                                                       \
 void execute_mscte##NUM(processor_t* p, insn_t insn) {                          \
-  AME_MATRIX_MEM_CORE(C, E##NUM, ({                                                \
-    Memory[base + j * stride + i * elementBytes] = Rij;                        \
-  }));                                                                         \
+  AME_MATRIX_LDST(C, E##NUM, {                                                \
+    MMU.store<uint##NUM##_t>(base + j * stride + i * elementBytes, Rij);                        \
+  });                                                                         \
 }
 DEF_STORE_CT(8)
 DEF_STORE_CT(16)
