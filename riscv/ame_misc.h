@@ -28,6 +28,34 @@ ame_copy_column(MatrixReg& dst, reg_t column, const std::vector<T>& source)
     memcpy(&dst.elt<T>(row, column), &source[row], sizeof(T));
 }
 
+using AmeByteColumn = std::vector<uint8_t>;
+using AmeByteColumnBatch = std::vector<AmeByteColumn>;
+
+static inline AmeByteColumnBatch
+ame_extract_columns(MatrixReg& src, reg_t begin, reg_t end)
+{
+  assert(begin <= end && end <= src.get_row_bytes());
+  AmeByteColumnBatch columns;
+  columns.reserve(end - begin);
+  for (reg_t column = begin; column < end; ++column)
+    columns.push_back(ame_extract_column<uint8_t>(src, column));
+  return columns;
+}
+
+static inline void
+ame_pack_columns(MatrixReg& dst,
+                 const AmeByteColumnBatch& firstColumns,
+                 const AmeByteColumnBatch& secondColumns)
+{
+  assert(firstColumns.size() == secondColumns.size());
+  assert(firstColumns.size() + secondColumns.size() == dst.get_row_bytes());
+  reg_t dstColumn = 0;
+  for (const auto& sourceColumn : firstColumns)
+    ame_copy_column<uint8_t>(dst, dstColumn++, sourceColumn);
+  for (const auto& sourceColumn : secondColumns)
+    ame_copy_column<uint8_t>(dst, dstColumn++, sourceColumn);
+}
+
 #define AME_MZERO_LOOP(NUM_REGS, BODY)                                  \
   do {                                                                  \
     require_matrix_ms;                                                  \
@@ -177,6 +205,35 @@ ame_copy_column(MatrixReg& dst, reg_t column, const std::vector<T>& source)
     for (reg_t j = 0; j < cols; ++j) {                                  \
       BODY;                                                             \
     }                                                                   \
+    AME_END;                                                            \
+  } while (0)
+
+#define AME_MPACK_LOOP(BODY)                                            \
+  do {                                                                  \
+    require_matrix_ms;                                                  \
+    const reg_t dstIndex = insn.m_md();                                 \
+    const reg_t ms1Index = insn.m_ms1();                                \
+    const reg_t ms2Index = insn.m_ms2();                                \
+    const bool tileType = dstIndex < 4;                                 \
+    require(tileType == (ms1Index < 4));                                \
+    require(tileType == (ms2Index < 4));                                \
+    MatrixReg& dst = tileType                                           \
+      ? P.AMU.tile_regs[dstIndex]                                       \
+      : P.AMU.acc_regs[dstIndex - 4];                                   \
+    MatrixReg& ms1 = tileType                                           \
+      ? P.AMU.tile_regs[ms1Index]                                       \
+      : P.AMU.acc_regs[ms1Index - 4];                                   \
+    MatrixReg& ms2 = tileType                                           \
+      ? P.AMU.tile_regs[ms2Index]                                       \
+      : P.AMU.acc_regs[ms2Index - 4];                                   \
+    require(dst.get_rownum() == ms1.get_rownum());                      \
+    require(dst.get_rownum() == ms2.get_rownum());                      \
+    require(dst.get_row_bytes() == ms1.get_row_bytes());                \
+    require(dst.get_row_bytes() == ms2.get_row_bytes());                \
+    const reg_t cols = dst.get_row_bytes();                             \
+    require(cols != 0 && cols % 2 == 0);                                \
+    const reg_t halfCols = cols / 2;                                    \
+    BODY;                                                               \
     AME_END;                                                            \
   } while (0)
 

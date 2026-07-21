@@ -903,6 +903,9 @@ riscv_insn_ext_ame = \
 	mbce32 \
 	mbce64 \
 	mrbc_mv_i \
+	mpack \
+	mpackhl \
+	mpackhh \
 	mcbce8_mv_i \
 	mcbce16_mv_i \
 	mcbce32_mv_i \

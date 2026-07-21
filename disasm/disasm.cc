@@ -1768,6 +1768,9 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
     DISASM_INSN("mbce32", mbce32, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
     DISASM_INSN("mbce64", mbce64, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
     DISASM_INSN("mrbc.mv.i", mrbc_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
+    DISASM_INSN("mpack", mpack, 0, {&m_whole_reg, &m_whole_ms1, &m_whole_ms2});
+    DISASM_INSN("mpackhl", mpackhl, 0, {&m_whole_reg, &m_whole_ms1, &m_whole_ms2});
+    DISASM_INSN("mpackhh", mpackhh, 0, {&m_whole_reg, &m_whole_ms1, &m_whole_ms2});
     DISASM_INSN("mcbce8.mv.i", mcbce8_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
     DISASM_INSN("mcbce16.mv.i", mcbce16_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
     DISASM_INSN("mcbce32.mv.i", mcbce32_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
