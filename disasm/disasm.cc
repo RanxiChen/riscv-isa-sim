@@ -583,6 +583,16 @@ struct : public arg_t {
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
+    reg_t raw = insn.m_ms1();
+    const std::string name = raw < 4
+      ? "tr" + std::to_string(raw)
+      : "acc" + std::to_string(raw - 4);
+    return name + "[" + std::to_string(insn.m_uimm3()) + "]";
+  }
+} m_whole_ms1_uimm3;
+
+struct : public arg_t {
+  std::string to_string(insn_t insn) const {
     reg_t raw = insn.m_ms2();
     return raw < 4
       ? "tr" + std::to_string(raw)
@@ -1753,6 +1763,15 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
     DISASM_INSN("mmovh.m.x", mmovh_m_x, 0, {&m_whole_reg, &xrs2, &xrs1});
     DISASM_INSN("mmovw.m.x", mmovw_m_x, 0, {&m_whole_reg, &xrs2, &xrs1});
     DISASM_INSN("mmovd.m.x", mmovd_m_x, 0, {&m_whole_reg, &xrs2, &xrs1});
+    DISASM_INSN("mbce8", mbce8, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
+    DISASM_INSN("mbce16", mbce16, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
+    DISASM_INSN("mbce32", mbce32, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
+    DISASM_INSN("mbce64", mbce64, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
+    DISASM_INSN("mrbc.mv.i", mrbc_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
+    DISASM_INSN("mcbce8.mv.i", mcbce8_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
+    DISASM_INSN("mcbce16.mv.i", mcbce16_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
+    DISASM_INSN("mcbce32.mv.i", mcbce32_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
+    DISASM_INSN("mcbce64.mv.i", mcbce64_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
     DISASM_INSN("mlae8",  mlae8,  0, {&m_tile_reg, &base_only_address, &xrs2});
     DISASM_INSN("msae8",  msae8,  0, {&m_tile_reg, &base_only_address, &xrs2});
     DISASM_INSN("mlate8", mlate8, 0, {&m_tile_reg, &base_only_address, &xrs2});

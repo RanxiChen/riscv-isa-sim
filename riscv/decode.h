@@ -153,6 +153,7 @@ public:
 
   // AME instruction fields
   uint64_t m_uimm10() { return x(15, 10); }
+  uint64_t m_uimm3() { return x(23, 3); }
   uint64_t m_md() { return x(7, 3); }
   uint64_t m_ms1() { return x(15, 3); }
   uint64_t m_ms2() { return x(20, 3); }
