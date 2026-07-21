@@ -38,6 +38,12 @@ void MatrixReg::reset(reg_t new_total_bits, reg_t new_row_bits)
   memset(data, 0, total_bytes);
 }
 
+void MatrixReg::zero()
+{
+  assert(data != nullptr);
+  memset(data, 0, total_bytes);
+}
+
 // =============================================================================
 // ame_mcsr_t implementation — composite CSR for xmcsr (0x802)
 // =============================================================================

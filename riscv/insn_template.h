@@ -11,5 +11,6 @@
 #include "v_ext_macros.h"
 #include "ame_macc.h"
 #include "ame_mem.h"
+#include "ame_misc.h"
 #include "debug_defines.h"
 #include <assert.h>

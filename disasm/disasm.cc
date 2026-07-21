@@ -1722,6 +1722,10 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
     DISASM_INSN("mmaccu.w.b",  mmaccu_w_b,  0, {&m_md, &m_ms1, &m_ms2});
     DISASM_INSN("mmaccus.w.b", mmaccus_w_b, 0, {&m_md, &m_ms1, &m_ms2});
     DISASM_INSN("mmaccsu.w.b", mmaccsu_w_b, 0, {&m_md, &m_ms1, &m_ms2});
+    DISASM_INSN("mzero",   mzero,   0, {&m_whole_reg});
+    DISASM_INSN("mzero2r", mzero2r, 0, {&m_whole_reg});
+    DISASM_INSN("mzero4r", mzero4r, 0, {&m_whole_reg});
+    DISASM_INSN("mzero8r", mzero8r, 0, {&m_whole_reg});
     DISASM_INSN("mlae8",  mlae8,  0, {&m_tile_reg, &base_only_address, &xrs2});
     DISASM_INSN("msae8",  msae8,  0, {&m_tile_reg, &base_only_address, &xrs2});
     DISASM_INSN("mlate8", mlate8, 0, {&m_tile_reg, &base_only_address, &xrs2});

@@ -29,6 +29,7 @@ public:
   MatrixReg& operator=(const MatrixReg&) = delete;
 
   void reset(reg_t total_bits, reg_t row_bits);
+  void zero();
 
   template<typename T> T* row_ptr(reg_t row) {
     assert(data != nullptr);

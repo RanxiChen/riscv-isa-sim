@@ -885,6 +885,10 @@ riscv_insn_ext_ame = \
 	mmaccu_w_b \
 	mmaccus_w_b \
 	mmaccsu_w_b \
+	mzero \
+	mzero2r \
+	mzero4r \
+	mzero8r \
 	mrelease \
 	msettileki \
 	msettilek \
