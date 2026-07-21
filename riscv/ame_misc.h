@@ -28,6 +28,14 @@ ame_copy_column(MatrixReg& dst, reg_t column, const std::vector<T>& source)
     memcpy(&dst.elt<T>(row, column), &source[row], sizeof(T));
 }
 
+template<typename T>
+static inline void
+ame_zero_column(MatrixReg& dst, reg_t column)
+{
+  for (reg_t row = 0; row < dst.get_rownum(); ++row)
+    memset(&dst.elt<T>(row, column), 0, sizeof(T));
+}
+
 using AmeByteColumn = std::vector<uint8_t>;
 using AmeByteColumnBatch = std::vector<AmeByteColumn>;
 
@@ -234,6 +242,120 @@ ame_pack_columns(MatrixReg& dst,
     require(cols != 0 && cols % 2 == 0);                                \
     const reg_t halfCols = cols / 2;                                    \
     BODY;                                                               \
+    AME_END;                                                            \
+  } while (0)
+
+#define AME_MRSLIDEDOWN_LOOP(BODY)                                     \
+  do {                                                                  \
+    require_matrix_ms;                                                  \
+    const reg_t dstIndex = insn.m_md();                                 \
+    const reg_t srcIndex = insn.m_ms1();                                \
+    require((dstIndex < 4) == (srcIndex < 4));                          \
+    MatrixReg& dst = dstIndex < 4                                       \
+      ? P.AMU.tile_regs[dstIndex]                                       \
+      : P.AMU.acc_regs[dstIndex - 4];                                   \
+    MatrixReg& src = srcIndex < 4                                       \
+      ? P.AMU.tile_regs[srcIndex]                                       \
+      : P.AMU.acc_regs[srcIndex - 4];                                   \
+    require(dst.get_rownum() == src.get_rownum());                      \
+    require(dst.get_row_bytes() == src.get_row_bytes());                \
+    const reg_t rows = dst.get_rownum();                                \
+    require(rows != 0 && (rows & (rows - 1)) == 0);                     \
+    const reg_t shift = insn.m_uimm3() & (rows - 1);                    \
+    const reg_t rowBytes = dst.get_row_bytes();                          \
+    for (reg_t i = 0; i < rows - shift; ++i) {                          \
+      uint8_t* dstRow = dst.row_ptr<uint8_t>(i);                        \
+      const uint8_t* srcRow = src.row_ptr<uint8_t>(i + shift);          \
+      if (dstRow != srcRow)                                             \
+        BODY;                                                           \
+    }                                                                   \
+    for (reg_t i = rows - shift; i < rows; ++i)                         \
+      memset(dst.row_ptr<uint8_t>(i), 0, rowBytes);                     \
+    AME_END;                                                            \
+  } while (0)
+
+#define AME_MRSLIDEUP_LOOP(BODY)                                       \
+  do {                                                                  \
+    require_matrix_ms;                                                  \
+    const reg_t dstIndex = insn.m_md();                                 \
+    const reg_t srcIndex = insn.m_ms1();                                \
+    require((dstIndex < 4) == (srcIndex < 4));                          \
+    MatrixReg& dst = dstIndex < 4                                       \
+      ? P.AMU.tile_regs[dstIndex]                                       \
+      : P.AMU.acc_regs[dstIndex - 4];                                   \
+    MatrixReg& src = srcIndex < 4                                       \
+      ? P.AMU.tile_regs[srcIndex]                                       \
+      : P.AMU.acc_regs[srcIndex - 4];                                   \
+    require(dst.get_rownum() == src.get_rownum());                      \
+    require(dst.get_row_bytes() == src.get_row_bytes());                \
+    const reg_t rows = dst.get_rownum();                                \
+    require(rows != 0 && (rows & (rows - 1)) == 0);                     \
+    const reg_t shift = insn.m_uimm3() & (rows - 1);                    \
+    const reg_t rowBytes = dst.get_row_bytes();                          \
+    for (reg_t i = rows; i-- > shift; ) {                               \
+      uint8_t* dstRow = dst.row_ptr<uint8_t>(i);                        \
+      const uint8_t* srcRow = src.row_ptr<uint8_t>(i - shift);          \
+      if (dstRow != srcRow)                                             \
+        BODY;                                                           \
+    }                                                                   \
+    for (reg_t i = 0; i < shift; ++i)                                  \
+      memset(dst.row_ptr<uint8_t>(i), 0, rowBytes);                     \
+    AME_END;                                                            \
+  } while (0)
+
+#define AME_MCSLIDEDOWN_LOOP(ELEMENT_TYPE, BODY)                       \
+  do {                                                                  \
+    require_matrix_ms;                                                  \
+    const reg_t dstIndex = insn.m_md();                                 \
+    const reg_t srcIndex = insn.m_ms1();                                \
+    require((dstIndex < 4) == (srcIndex < 4));                          \
+    MatrixReg& dst = dstIndex < 4                                       \
+      ? P.AMU.tile_regs[dstIndex]                                       \
+      : P.AMU.acc_regs[dstIndex - 4];                                   \
+    MatrixReg& src = srcIndex < 4                                       \
+      ? P.AMU.tile_regs[srcIndex]                                       \
+      : P.AMU.acc_regs[srcIndex - 4];                                   \
+    require(dst.get_rownum() == src.get_rownum());                      \
+    require(dst.get_row_bytes() == src.get_row_bytes());                \
+    require(dst.get_row_bytes() % sizeof(ELEMENT_TYPE) == 0);           \
+    const reg_t cols = dst.get_row_bytes() / sizeof(ELEMENT_TYPE);      \
+    require(cols != 0 && (cols & (cols - 1)) == 0);                     \
+    const reg_t shift = insn.m_uimm3() & (cols - 1);                    \
+    for (reg_t j = 0; j < cols - shift; ++j) {                          \
+      const std::vector<ELEMENT_TYPE> srcColumn =                       \
+        ame_extract_column<ELEMENT_TYPE>(src, j + shift);               \
+      BODY;                                                             \
+    }                                                                   \
+    for (reg_t j = cols - shift; j < cols; ++j)                         \
+      ame_zero_column<ELEMENT_TYPE>(dst, j);                            \
+    AME_END;                                                            \
+  } while (0)
+
+#define AME_MCSLIDEUP_LOOP(ELEMENT_TYPE, BODY)                         \
+  do {                                                                  \
+    require_matrix_ms;                                                  \
+    const reg_t dstIndex = insn.m_md();                                 \
+    const reg_t srcIndex = insn.m_ms1();                                \
+    require((dstIndex < 4) == (srcIndex < 4));                          \
+    MatrixReg& dst = dstIndex < 4                                       \
+      ? P.AMU.tile_regs[dstIndex]                                       \
+      : P.AMU.acc_regs[dstIndex - 4];                                   \
+    MatrixReg& src = srcIndex < 4                                       \
+      ? P.AMU.tile_regs[srcIndex]                                       \
+      : P.AMU.acc_regs[srcIndex - 4];                                   \
+    require(dst.get_rownum() == src.get_rownum());                      \
+    require(dst.get_row_bytes() == src.get_row_bytes());                \
+    require(dst.get_row_bytes() % sizeof(ELEMENT_TYPE) == 0);           \
+    const reg_t cols = dst.get_row_bytes() / sizeof(ELEMENT_TYPE);      \
+    require(cols != 0 && (cols & (cols - 1)) == 0);                     \
+    const reg_t shift = insn.m_uimm3() & (cols - 1);                    \
+    for (reg_t j = cols; j-- > shift; ) {                               \
+      const std::vector<ELEMENT_TYPE> srcColumn =                       \
+        ame_extract_column<ELEMENT_TYPE>(src, j - shift);               \
+      BODY;                                                             \
+    }                                                                   \
+    for (reg_t j = 0; j < shift; ++j)                                  \
+      ame_zero_column<ELEMENT_TYPE>(dst, j);                            \
     AME_END;                                                            \
   } while (0)
 

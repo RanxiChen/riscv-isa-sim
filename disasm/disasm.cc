@@ -533,6 +533,12 @@ struct : public arg_t {
 
 struct : public arg_t {
   std::string to_string(insn_t insn) const {
+    return std::to_string(insn.m_uimm3());
+  }
+} m_uimm3;
+
+struct : public arg_t {
+  std::string to_string(insn_t insn) const {
     return "acc" + std::to_string(insn.m_md() - 4);
   }
 } m_md;
@@ -1771,6 +1777,16 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
     DISASM_INSN("mpack", mpack, 0, {&m_whole_reg, &m_whole_ms1, &m_whole_ms2});
     DISASM_INSN("mpackhl", mpackhl, 0, {&m_whole_reg, &m_whole_ms1, &m_whole_ms2});
     DISASM_INSN("mpackhh", mpackhh, 0, {&m_whole_reg, &m_whole_ms1, &m_whole_ms2});
+    DISASM_INSN("mrslidedown", mrslidedown, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
+    DISASM_INSN("mrslideup", mrslideup, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
+    DISASM_INSN("mcslidedown.b", mcslidedown_b, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
+    DISASM_INSN("mcslidedown.h", mcslidedown_h, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
+    DISASM_INSN("mcslidedown.w", mcslidedown_w, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
+    DISASM_INSN("mcslidedown.d", mcslidedown_d, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
+    DISASM_INSN("mcslideup.b", mcslideup_b, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
+    DISASM_INSN("mcslideup.h", mcslideup_h, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
+    DISASM_INSN("mcslideup.w", mcslideup_w, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
+    DISASM_INSN("mcslideup.d", mcslideup_d, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
     DISASM_INSN("mcbce8.mv.i", mcbce8_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
     DISASM_INSN("mcbce16.mv.i", mcbce16_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});
     DISASM_INSN("mcbce32.mv.i", mcbce32_mv_i, 0, {&m_whole_reg, &m_whole_ms1_uimm3});

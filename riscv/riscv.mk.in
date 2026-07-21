@@ -906,6 +906,16 @@ riscv_insn_ext_ame = \
 	mpack \
 	mpackhl \
 	mpackhh \
+	mrslidedown \
+	mrslideup \
+	mcslidedown_b \
+	mcslidedown_h \
+	mcslidedown_w \
+	mcslidedown_d \
+	mcslideup_b \
+	mcslideup_h \
+	mcslideup_w \
+	mcslideup_d \
 	mcbce8_mv_i \
 	mcbce16_mv_i \
 	mcbce32_mv_i \
