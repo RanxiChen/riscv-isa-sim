@@ -564,6 +564,15 @@ struct : public arg_t {
 } m_acc_reg;
 
 struct : public arg_t {
+  std::string to_string(insn_t insn) const {
+    reg_t raw = insn.m_md();
+    return raw < 4
+      ? "tr" + std::to_string(raw)
+      : "acc" + std::to_string(raw - 4);
+  }
+} m_whole_reg;
+
+struct : public arg_t {
   std::string to_string(insn_t UNUSED insn) const {
     return "x0";
   }
@@ -1761,6 +1770,14 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
     DISASM_INSN("mscte16", mscte16, 0, {&m_acc_reg, &base_only_address, &xrs2});
     DISASM_INSN("mscte32", mscte32, 0, {&m_acc_reg, &base_only_address, &xrs2});
     DISASM_INSN("mscte64", mscte64, 0, {&m_acc_reg, &base_only_address, &xrs2});
+    DISASM_INSN("mlme8", mlme8, 0, {&m_whole_reg, &base_only_address});
+    DISASM_INSN("mlme16", mlme16, 0, {&m_whole_reg, &base_only_address});
+    DISASM_INSN("mlme32", mlme32, 0, {&m_whole_reg, &base_only_address});
+    DISASM_INSN("mlme64", mlme64, 0, {&m_whole_reg, &base_only_address});
+    DISASM_INSN("msme8", msme8, 0, {&m_whole_reg, &base_only_address});
+    DISASM_INSN("msme16", msme16, 0, {&m_whole_reg, &base_only_address});
+    DISASM_INSN("msme32", msme32, 0, {&m_whole_reg, &base_only_address});
+    DISASM_INSN("msme64", msme64, 0, {&m_whole_reg, &base_only_address});
     DEFINE_NOARG(mrelease);
     DISASM_INSN("msettilek", msettilek, 0, {&xrs1});
     DISASM_INSN("msettileki", msettileki, 0, {&m_uimm10});

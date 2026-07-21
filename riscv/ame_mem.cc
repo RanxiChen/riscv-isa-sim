@@ -157,3 +157,31 @@ DEF_STORE_CT(16)
 DEF_STORE_CT(32)
 DEF_STORE_CT(64)
 #undef DEF_STORE_CT
+
+// ── Whole matrix load ─────────────────────────────────────────────────────
+#define DEF_WHOLE_LOAD(NUM)                                                   \
+void execute_mlme##NUM(processor_t* p, insn_t insn) {                         \
+  AME_MATRIX_WHOLE_LDST(uint##NUM##_t, ({                                    \
+    Rij = MMU.load<uint##NUM##_t>(                                           \
+        base + i * rowBytes + j * elementBytes);                             \
+  }));                                                                       \
+}
+DEF_WHOLE_LOAD(8)
+DEF_WHOLE_LOAD(16)
+DEF_WHOLE_LOAD(32)
+DEF_WHOLE_LOAD(64)
+#undef DEF_WHOLE_LOAD
+
+// ── Whole matrix store ────────────────────────────────────────────────────
+#define DEF_WHOLE_STORE(NUM)                                                  \
+void execute_msme##NUM(processor_t* p, insn_t insn) {                         \
+  AME_MATRIX_WHOLE_LDST(uint##NUM##_t, ({                                    \
+    MMU.store<uint##NUM##_t>(                                                \
+        base + i * rowBytes + j * elementBytes, Rij);                        \
+  }));                                                                       \
+}
+DEF_WHOLE_STORE(8)
+DEF_WHOLE_STORE(16)
+DEF_WHOLE_STORE(32)
+DEF_WHOLE_STORE(64)
+#undef DEF_WHOLE_STORE

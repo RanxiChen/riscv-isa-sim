@@ -939,7 +939,15 @@ riscv_insn_ext_ame = \
 	mscte8 \
 	mscte16 \
 	mscte32 \
-	mscte64
+	mscte64 \
+	mlme8 \
+	mlme16 \
+	mlme32 \
+	mlme64 \
+	msme8 \
+	msme16 \
+	msme32 \
+	msme64
 
 riscv_insn_ext_v_ctrl = \
 	vsetivli \
