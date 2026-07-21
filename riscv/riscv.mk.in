@@ -889,6 +889,15 @@ riscv_insn_ext_ame = \
 	mzero2r \
 	mzero4r \
 	mzero8r \
+	mmov_mm \
+	mmovb_x_m \
+	mmovh_x_m \
+	mmovw_x_m \
+	mmovd_x_m \
+	mmovb_m_x \
+	mmovh_m_x \
+	mmovw_m_x \
+	mmovd_m_x \
 	mrelease \
 	msettileki \
 	msettilek \

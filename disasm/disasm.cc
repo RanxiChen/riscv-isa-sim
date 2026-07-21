@@ -573,6 +573,24 @@ struct : public arg_t {
 } m_whole_reg;
 
 struct : public arg_t {
+  std::string to_string(insn_t insn) const {
+    reg_t raw = insn.m_ms1();
+    return raw < 4
+      ? "tr" + std::to_string(raw)
+      : "acc" + std::to_string(raw - 4);
+  }
+} m_whole_ms1;
+
+struct : public arg_t {
+  std::string to_string(insn_t insn) const {
+    reg_t raw = insn.m_ms2();
+    return raw < 4
+      ? "tr" + std::to_string(raw)
+      : "acc" + std::to_string(raw - 4);
+  }
+} m_whole_ms2;
+
+struct : public arg_t {
   std::string to_string(insn_t UNUSED insn) const {
     return "x0";
   }
@@ -1726,6 +1744,15 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
     DISASM_INSN("mzero2r", mzero2r, 0, {&m_whole_reg});
     DISASM_INSN("mzero4r", mzero4r, 0, {&m_whole_reg});
     DISASM_INSN("mzero8r", mzero8r, 0, {&m_whole_reg});
+    DISASM_INSN("mmov.mm", mmov_mm, 0, {&m_whole_reg, &m_whole_ms1});
+    DISASM_INSN("mmovb.x.m", mmovb_x_m, 0, {&xrd, &m_whole_ms2, &xrs1});
+    DISASM_INSN("mmovh.x.m", mmovh_x_m, 0, {&xrd, &m_whole_ms2, &xrs1});
+    DISASM_INSN("mmovw.x.m", mmovw_x_m, 0, {&xrd, &m_whole_ms2, &xrs1});
+    DISASM_INSN("mmovd.x.m", mmovd_x_m, 0, {&xrd, &m_whole_ms2, &xrs1});
+    DISASM_INSN("mmovb.m.x", mmovb_m_x, 0, {&m_whole_reg, &xrs2, &xrs1});
+    DISASM_INSN("mmovh.m.x", mmovh_m_x, 0, {&m_whole_reg, &xrs2, &xrs1});
+    DISASM_INSN("mmovw.m.x", mmovw_m_x, 0, {&m_whole_reg, &xrs2, &xrs1});
+    DISASM_INSN("mmovd.m.x", mmovd_m_x, 0, {&m_whole_reg, &xrs2, &xrs1});
     DISASM_INSN("mlae8",  mlae8,  0, {&m_tile_reg, &base_only_address, &xrs2});
     DISASM_INSN("msae8",  msae8,  0, {&m_tile_reg, &base_only_address, &xrs2});
     DISASM_INSN("mlate8", mlate8, 0, {&m_tile_reg, &base_only_address, &xrs2});
