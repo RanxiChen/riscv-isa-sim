@@ -937,7 +937,8 @@ riscv_insn_ext_ame = \
 	msll_w_mm \
 	msll_w_mv_i \
 	msra_w_mm \
-	mcbce8_mv_i \
+	msra_w_mv_i \
+	 mcbce8_mv_i \
 	mcbce16_mv_i \
 	mcbce32_mv_i \
 	mcbce64_mv_i \
