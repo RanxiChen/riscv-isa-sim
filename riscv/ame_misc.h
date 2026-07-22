@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <vector>
 
 template<typename T,
@@ -130,6 +131,304 @@ using AmeFp64Operand = AmeFpOperand<
 
 #define AME_FP_EWISE_COMPARE(TYPE, BODY)                                 \
   AME_FP_EWISE_IMPL(TYPE, false, BODY)
+
+#define AME_MFEW_FEATURE(BIT)                                            \
+  (AMU.xmisa_mfew_mask() | ameUnit_t::xmisa_bit(ameUnit_t::BIT))
+#define AME_MFIC_FEATURE(BIT)                                            \
+  (AMU.xmisa_mfic_mask() | ameUnit_t::xmisa_bit(ameUnit_t::BIT))
+#define AME_MIEW_FEATURE(BIT)                                            \
+  (AMU.xmisa_miew_mask() | ameUnit_t::xmisa_bit(ameUnit_t::BIT))
+
+template<typename T>
+class AmeConvertSnapshot
+{
+public:
+  class Row
+  {
+  public:
+    explicit Row(const T* data) : data(data) {}
+    const T& operator[](reg_t col) const { return data[col]; }
+
+  private:
+    const T* data;
+  };
+
+  explicit AmeConvertSnapshot(MatrixReg& src)
+    : rows(src.get_rownum()), cols(src.get_row_bytes() / sizeof(T)),
+      values(rows * cols)
+  {
+    assert(src.get_row_bytes() % sizeof(T) == 0);
+    for (reg_t i = 0; i < rows; ++i)
+      memcpy(values.data() + i * cols, src.row_ptr<T>(i),
+             cols * sizeof(T));
+  }
+
+  Row operator[](reg_t row) const { return Row(values.data() + row * cols); }
+  reg_t row_count() const { return rows; }
+  reg_t col_count() const { return cols; }
+
+private:
+  reg_t rows;
+  reg_t cols;
+  std::vector<T> values;
+};
+
+template<typename T>
+class AmeConvertDest
+{
+public:
+  class Row
+  {
+  public:
+    explicit Row(T* data) : data(data) {}
+    T& operator[](reg_t col) const { return data[col]; }
+
+  private:
+    T* data;
+  };
+
+  explicit AmeConvertDest(MatrixReg& dst) : dst(dst)
+  {
+    assert(dst.get_row_bytes() % sizeof(T) == 0);
+  }
+
+  Row operator[](reg_t row) { return Row(dst.row_ptr<T>(row)); }
+
+private:
+  MatrixReg& dst;
+};
+
+#define AME_CONVERT_CORE(DST_TYPE, SRC_TYPE, FEATURE_MASK, USES_ROUNDING,  \
+                         TRACK_FP_FLAGS, BODY)                            \
+  do {                                                                    \
+    require_matrix_ms;                                                    \
+    auto& AMU = P.AMU;                                                    \
+    require(AMU.supports_xmisa_feature(FEATURE_MASK));                    \
+    if (USES_ROUNDING)                                                    \
+      require(AMU.xmfrm_is_valid(AMU.get_xmfrm()));                       \
+    const reg_t dstIndex = insn.m_md();                                   \
+    const reg_t srcIndex = insn.m_ms1();                                  \
+    require(dstIndex >= 4 && dstIndex < 8);                               \
+    require(srcIndex >= 4 && srcIndex < 8);                               \
+    MatrixReg& md = AMU.acc_regs[dstIndex - 4];                           \
+    MatrixReg& ms1 = AMU.acc_regs[srcIndex - 4];                          \
+    require(md.get_rownum() == ms1.get_rownum());                         \
+    require(md.get_row_bytes() == ms1.get_row_bytes());                   \
+    require(md.get_row_bytes() % sizeof(DST_TYPE) == 0);                  \
+    require(ms1.get_row_bytes() % sizeof(SRC_TYPE) == 0);                 \
+    AmeConvertSnapshot<SRC_TYPE> S(ms1);                                  \
+    AmeConvertDest<DST_TYPE> D(md);                                       \
+    const reg_t rows = md.get_rownum();                                   \
+    const reg_t srcCols = ms1.get_row_bytes() / sizeof(SRC_TYPE);         \
+    const reg_t dstCols = md.get_row_bytes() / sizeof(DST_TYPE);          \
+    if (USES_ROUNDING)                                                    \
+      softfloat_roundingMode = AMU.get_xmfrm();                           \
+    if (TRACK_FP_FLAGS)                                                   \
+      softfloat_exceptionFlags = 0;                                      \
+    BODY;                                                                 \
+    if (TRACK_FP_FLAGS)                                                   \
+      ame_set_matrix_fp_exceptions(AMU);                                  \
+    AME_END;                                                              \
+  } while (0)
+
+#define AME_MFCVT_WIDEN_LOW(DST_TYPE, SRC_TYPE, FEATURE_MASK,             \
+                            USES_ROUNDING, CONVERT_EXPR, BODY)            \
+  AME_CONVERT_CORE(DST_TYPE, SRC_TYPE, FEATURE_MASK, USES_ROUNDING, true, \
+    {                                                                     \
+      require(srcCols == 2 * dstCols);                                   \
+      auto convert = [&](SRC_TYPE value) -> DST_TYPE { return CONVERT_EXPR; }; \
+      for (reg_t i = 0; i < rows; ++i)                                   \
+        for (reg_t j = 0; j < dstCols; ++j)                              \
+          BODY;                                                           \
+    })
+
+#define AME_MFCVT_WIDEN_HIGH(DST_TYPE, SRC_TYPE, FEATURE_MASK,            \
+                             USES_ROUNDING, CONVERT_EXPR, BODY)           \
+  AME_CONVERT_CORE(DST_TYPE, SRC_TYPE, FEATURE_MASK, USES_ROUNDING, true, \
+    {                                                                     \
+      require(srcCols == 2 * dstCols);                                   \
+      auto convert = [&](SRC_TYPE value) -> DST_TYPE { return CONVERT_EXPR; }; \
+      for (reg_t i = 0; i < rows; ++i)                                   \
+        for (reg_t j = 0; j < dstCols; ++j)                              \
+          BODY;                                                           \
+    })
+
+#define AME_MFCVT_NARROW_LOW(DST_TYPE, SRC_TYPE, FEATURE_MASK,            \
+                             CONVERT_EXPR, BODY)                          \
+  AME_CONVERT_CORE(DST_TYPE, SRC_TYPE, FEATURE_MASK, true, true,          \
+    {                                                                     \
+      require(dstCols == 2 * srcCols);                                   \
+      auto convert = [&](SRC_TYPE value) -> DST_TYPE { return CONVERT_EXPR; }; \
+      for (reg_t i = 0; i < rows; ++i)                                   \
+        for (reg_t j = 0; j < srcCols; ++j)                              \
+          BODY;                                                           \
+    })
+
+#define AME_MFCVT_NARROW_HIGH(DST_TYPE, SRC_TYPE, FEATURE_MASK,           \
+                              CONVERT_EXPR, BODY)                         \
+  AME_CONVERT_CORE(DST_TYPE, SRC_TYPE, FEATURE_MASK, true, true,          \
+    {                                                                     \
+      require(dstCols == 2 * srcCols);                                   \
+      auto convert = [&](SRC_TYPE value) -> DST_TYPE { return CONVERT_EXPR; }; \
+      for (reg_t i = 0; i < rows; ++i)                                   \
+        for (reg_t j = 0; j < srcCols; ++j)                              \
+          BODY;                                                           \
+    })
+
+#define AME_MFCVT_QUARTER_LOW(DST_TYPE, SRC_TYPE, FEATURE_MASK,           \
+                              CONVERT_EXPR, BODY)                         \
+  AME_CONVERT_CORE(DST_TYPE, SRC_TYPE, FEATURE_MASK, true, true,          \
+    {                                                                     \
+      require(dstCols == 4 * srcCols);                                   \
+      auto convert = [&](SRC_TYPE value) -> DST_TYPE { return CONVERT_EXPR; }; \
+      for (reg_t i = 0; i < rows; ++i)                                   \
+        for (reg_t j = 0; j < srcCols; ++j)                              \
+          BODY;                                                           \
+    })
+
+#define AME_MFCVT_QUARTER_HIGH(DST_TYPE, SRC_TYPE, FEATURE_MASK,          \
+                               CONVERT_EXPR, BODY)                        \
+  AME_CONVERT_CORE(DST_TYPE, SRC_TYPE, FEATURE_MASK, true, true,          \
+    {                                                                     \
+      require(dstCols == 4 * srcCols);                                   \
+      auto convert = [&](SRC_TYPE value) -> DST_TYPE { return CONVERT_EXPR; }; \
+      for (reg_t i = 0; i < rows; ++i)                                   \
+        for (reg_t j = 0; j < srcCols; ++j)                              \
+          BODY;                                                           \
+    })
+
+#define AME_MFCVT_SAME(DST_TYPE, SRC_TYPE, FEATURE_MASK,                  \
+                       CONVERT_EXPR, BODY)                                \
+  AME_CONVERT_CORE(DST_TYPE, SRC_TYPE, FEATURE_MASK, true, true,          \
+    {                                                                     \
+      require(dstCols == srcCols);                                       \
+      auto convert = [&](SRC_TYPE value) -> DST_TYPE { return CONVERT_EXPR; }; \
+      for (reg_t i = 0; i < rows; ++i)                                   \
+        for (reg_t j = 0; j < srcCols; ++j)                              \
+          BODY;                                                           \
+    })
+
+static inline int64_t
+ame_round_shift_signed(int32_t value, unsigned shift,
+                       ameUnit_t::xmxrm_rounding_mode mode)
+{
+  if (shift == 0)
+    return value;
+  const uint32_t bits = static_cast<uint32_t>(value);
+  const uint32_t roundBit = (bits >> (shift - 1)) & 1;
+  const uint32_t lowerMask = (uint32_t(1) << (shift - 1)) - 1;
+  const bool lowerNonzero = (bits & lowerMask) != 0;
+  const bool discardedNonzero = (bits & ((uint32_t(1) << shift) - 1)) != 0;
+  const uint32_t retainedLsb = (bits >> shift) & 1;
+  uint32_t increment = 0;
+  switch (mode) {
+    case ameUnit_t::XMXRM_RNU: increment = roundBit; break;
+    case ameUnit_t::XMXRM_RNE:
+      increment = roundBit && (lowerNonzero || retainedLsb); break;
+    case ameUnit_t::XMXRM_RDN: break;
+    case ameUnit_t::XMXRM_ROD:
+      increment = !retainedLsb && discardedNonzero; break;
+  }
+  const int64_t divisor = int64_t(1) << shift;
+  const int64_t base = value >= 0
+    ? int64_t(value) / divisor
+    : -((-int64_t(value) + divisor - 1) / divisor);
+  return base + increment;
+}
+
+static inline uint64_t
+ame_round_shift_unsigned(uint32_t value, unsigned shift,
+                         ameUnit_t::xmxrm_rounding_mode mode)
+{
+  if (shift == 0)
+    return value;
+  const uint32_t roundBit = (value >> (shift - 1)) & 1;
+  const uint32_t lowerMask = (uint32_t(1) << (shift - 1)) - 1;
+  const bool lowerNonzero = (value & lowerMask) != 0;
+  const bool discardedNonzero =
+    (value & ((uint32_t(1) << shift) - 1)) != 0;
+  const uint32_t retainedLsb = (value >> shift) & 1;
+  uint32_t increment = 0;
+  switch (mode) {
+    case ameUnit_t::XMXRM_RNU: increment = roundBit; break;
+    case ameUnit_t::XMXRM_RNE:
+      increment = roundBit && (lowerNonzero || retainedLsb); break;
+    case ameUnit_t::XMXRM_RDN: break;
+    case ameUnit_t::XMXRM_ROD:
+      increment = !retainedLsb && discardedNonzero; break;
+  }
+  return (uint64_t(value) >> shift) + increment;
+}
+
+static inline int8_t
+ame_saturate_i8(int64_t value, ameUnit_t& AMU)
+{
+  if (value > std::numeric_limits<int8_t>::max()) {
+    AMU.xmsat->write_raw((AMU.get_xmsat() | 1) & ameUnit_t::XMSAT_MASK);
+    return std::numeric_limits<int8_t>::max();
+  }
+  if (value < std::numeric_limits<int8_t>::min()) {
+    AMU.xmsat->write_raw((AMU.get_xmsat() | 1) & ameUnit_t::XMSAT_MASK);
+    return std::numeric_limits<int8_t>::min();
+  }
+  return static_cast<int8_t>(value);
+}
+
+static inline uint8_t
+ame_saturate_u8(uint64_t value, ameUnit_t& AMU)
+{
+  if (value > std::numeric_limits<uint8_t>::max()) {
+    AMU.xmsat->write_raw((AMU.get_xmsat() | 1) & ameUnit_t::XMSAT_MASK);
+    return std::numeric_limits<uint8_t>::max();
+  }
+  return static_cast<uint8_t>(value);
+}
+
+#define AME_MN4CLIP(DST_TYPE, SRC_TYPE, FEATURE_MASK, HIGH_QUARTER,       \
+                    ROUND_EXPR, BODY)                                    \
+  do {                                                                    \
+    require_matrix_ms;                                                    \
+    auto& AMU = P.AMU;                                                    \
+    require(AMU.supports_xmisa_feature(FEATURE_MASK));                    \
+    const reg_t dstIndex = insn.m_md();                                   \
+    const reg_t ms1Index = insn.m_ms1();                                  \
+    const reg_t ms2Index = insn.m_ms2();                                  \
+    require(dstIndex >= 4 && dstIndex < 8);                               \
+    require(ms1Index >= 4 && ms1Index < 8);                               \
+    require(ms2Index >= 4 && ms2Index < 8);                               \
+    MatrixReg& md = AMU.acc_regs[dstIndex - 4];                           \
+    MatrixReg& ms1 = AMU.acc_regs[ms1Index - 4];                          \
+    MatrixReg& ms2 = AMU.acc_regs[ms2Index - 4];                          \
+    require(md.get_rownum() == ms1.get_rownum());                         \
+    require(md.get_rownum() == ms2.get_rownum());                         \
+    require(md.get_row_bytes() == ms1.get_row_bytes());                   \
+    require(md.get_row_bytes() == ms2.get_row_bytes());                   \
+    require(md.get_row_bytes() % sizeof(DST_TYPE) == 0);                  \
+    require(ms1.get_row_bytes() % sizeof(uint32_t) == 0);                 \
+    require(ms2.get_row_bytes() % sizeof(SRC_TYPE) == 0);                 \
+    AmeConvertDest<DST_TYPE> D(md);                                       \
+    AmeConvertSnapshot<SRC_TYPE> S(ms2);                                  \
+    AmeConvertSnapshot<uint32_t> Shift(ms1);                              \
+    const reg_t rows = md.get_rownum();                                   \
+    const reg_t srcCols = ms2.get_row_bytes() / sizeof(SRC_TYPE);         \
+    const reg_t dstCols = md.get_row_bytes() / sizeof(DST_TYPE);          \
+    require(dstCols == 4 * srcCols);                                      \
+    const reg_t ctrl = insn.m_uimm3();                                   \
+    const bool matrixMatrix = ctrl == 0b111;                              \
+    if (!matrixMatrix)                                                    \
+      require(ctrl < rows);                                               \
+    const reg_t dstBase = HIGH_QUARTER ? srcCols : 0;                     \
+    const auto roundingMode = AMU.get_xmxrm_mode();                       \
+    auto convert = [&](SRC_TYPE value, unsigned shift) -> DST_TYPE {      \
+      return ROUND_EXPR;                                                  \
+    };                                                                     \
+    for (reg_t i = 0; i < rows; ++i)                                     \
+      for (reg_t j = 0; j < srcCols; ++j) {                              \
+        const unsigned shift = Shift[matrixMatrix ? i : ctrl][j] & 0x1F; \
+        BODY;                                                             \
+      }                                                                   \
+    AME_END;                                                              \
+  } while (0)
 
 template<typename T>
 static inline std::vector<T>

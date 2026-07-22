@@ -86,7 +86,7 @@ float8_t softfloat_roundPackToE5M2( bool sign, int_fast16_t exp, uint_fast16_t s
             /* If saturation mode is enabled, convert to the max value of E5M2, otherwise Inf */
             uiZ = saturationMode
                 ? packToE5M2UI( sign, 0x1E, 0x3 )
-                : packToE5M2UI( sign, 0x1F, 0x0 ) - ! roundIncrement;
+                : packToE5M2UI( sign, 0x1F, 0x0 );
             goto uiZ;
 
         }
@@ -114,4 +114,3 @@ float8_t softfloat_roundPackToE5M2( bool sign, int_fast16_t exp, uint_fast16_t s
     return uZ.f;
 
 }
-

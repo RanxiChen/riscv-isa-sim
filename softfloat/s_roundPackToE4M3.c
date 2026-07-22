@@ -86,7 +86,7 @@ float8_t softfloat_roundPackToE4M3( bool sign, int_fast16_t exp, uint_fast16_t s
             softfloat_raiseFlags(
                 softfloat_flag_overflow | softfloat_flag_inexact );
             /* If saturation mode is enabled, convert to the max value of E4M3, otherwise NaN. */
-            uiZ = (saturationMode || !roundIncrement)
+            uiZ = saturationMode
                 ? packToE4M3UI( sign, 0xF, 0x6 )
                 : softfloat_commonNaNToE4M3UI(&commonNaN);
             goto uiZ;
@@ -116,4 +116,3 @@ float8_t softfloat_roundPackToE4M3( bool sign, int_fast16_t exp, uint_fast16_t s
     return uZ.f;
 
 }
-

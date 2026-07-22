@@ -49,7 +49,7 @@ e4m3_t f16_to_e4m3( float16_t a, bool saturationMode )
    bool sign;
    int_fast8_t exp;
    uint_fast16_t frac, frac8;
-   struct commonNaN commonNaN;
+   struct commonNaN commonNaN = {0};
    uint_fast8_t uiZ;
    union ui8_f8 uZ;
 
@@ -86,4 +86,3 @@ uiZ:
    uZ.ui = uiZ;
    return uZ.f;
 }
-

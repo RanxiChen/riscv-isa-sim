@@ -68,7 +68,7 @@ e5m2_t f16_to_e5m2( float16_t a, bool saturationMode )
       } else {
          /* If saturation mode is enabled, convert Inf to the max value of E5M2, otherwise Inf */
          uiZ = saturationMode
-                ? packToE5M2UI( sign, 0x1D, 0x3 )
+                ? packToE5M2UI( sign, 0x1E, 0x3 )
                 : packToE5M2UI( sign, 0x1F, 0x0 );
       }
       goto uiZ;
@@ -86,4 +86,3 @@ uiZ:
    uZ.ui = uiZ;
    return uZ.f;
 }
-

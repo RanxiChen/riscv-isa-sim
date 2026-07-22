@@ -953,6 +953,47 @@ riscv_insn_ext_ame = \
 	mfmin_h \
 	mfmin_s \
 	mfmin_d \
+	mfcvtl_h_e4 \
+	mfcvth_h_e4 \
+	mfcvtl_h_e5 \
+	mfcvth_h_e5 \
+	mfcvtl_e4_h \
+	mfcvth_e4_h \
+	mfcvtl_e5_h \
+	mfcvth_e5_h \
+	mfcvtl_s_h \
+	mfcvth_s_h \
+	mfcvtl_h_s \
+	mfcvth_h_s \
+	mfcvtl_s_bf16 \
+	mfcvth_s_bf16 \
+	mfcvtl_bf16_s \
+	mfcvth_bf16_s \
+	mfcvtl_d_s \
+	mfcvth_d_s \
+	mfcvtl_s_d \
+	mfcvth_s_d \
+	mfcvtl_e4_s \
+	mfcvth_e4_s \
+	mfcvtl_e5_s \
+	mfcvth_e5_s \
+	msfcvtl_h_b \
+	msfcvth_h_b \
+	mufcvtl_h_b \
+	mufcvth_h_b \
+	msfcvt_s_w \
+	mufcvt_s_w \
+	mfscvtl_b_h \
+	mfscvth_b_h \
+	mfucvtl_b_h \
+	mfucvth_b_h \
+	mfscvt_w_s \
+	mfucvt_w_s \
+	mn4clipl_w \
+	mn4cliph_w \
+	mn4cliplu_w \
+	mn4cliphu_w \
+
 	 mcbce8_mv_i \
 	mcbce16_mv_i \
 	mcbce32_mv_i \

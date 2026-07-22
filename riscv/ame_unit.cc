@@ -133,6 +133,7 @@ void ameUnit_t::reset()
   // reserved for the later floating-point conversion instructions.
   xmisa_features |= xmisa_mfew_mask();
   xmisa_features |= xmisa_miew_mask();
+  xmisa_features |= xmisa_mfic_mask();
   if (ELEN >= 16)
     xmisa_features |= xmisa_bit(XMISA_BIT_MMF16F16);
   if (ELEN >= 32)
