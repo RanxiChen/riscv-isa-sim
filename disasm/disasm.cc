@@ -1819,6 +1819,18 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
     DISASM_INSN("mfmul.s.mv.i", mfmul_s_mv_i, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1_uimm3});
     DISASM_INSN("mfmul.d.mm", mfmul_d_mm, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1});
     DISASM_INSN("mfmul.d.mv.i", mfmul_d_mv_i, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1_uimm3});
+    DISASM_INSN("mfmax.h.mm", mfmax_h_mm, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1});
+    DISASM_INSN("mfmax.h.mv.i", mfmax_h_mv_i, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1_uimm3});
+    DISASM_INSN("mfmax.s.mm", mfmax_s_mm, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1});
+    DISASM_INSN("mfmax.s.mv.i", mfmax_s_mv_i, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1_uimm3});
+    DISASM_INSN("mfmax.d.mm", mfmax_d_mm, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1});
+    DISASM_INSN("mfmax.d.mv.i", mfmax_d_mv_i, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1_uimm3});
+    DISASM_INSN("mfmin.h.mm", mfmin_h_mm, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1});
+    DISASM_INSN("mfmin.h.mv.i", mfmin_h_mv_i, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1_uimm3});
+    DISASM_INSN("mfmin.s.mm", mfmin_s_mm, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1});
+    DISASM_INSN("mfmin.s.mv.i", mfmin_s_mv_i, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1_uimm3});
+    DISASM_INSN("mfmin.d.mm", mfmin_d_mm, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1});
+    DISASM_INSN("mfmin.d.mv.i", mfmin_d_mv_i, 0, {&m_acc_reg, &m_whole_ms2, &m_whole_ms1_uimm3});
     DISASM_INSN("mcslidedown.b", mcslidedown_b, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
     DISASM_INSN("mcslidedown.h", mcslidedown_h, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});
     DISASM_INSN("mcslidedown.w", mcslidedown_w, 0, {&m_whole_reg, &m_whole_ms1, &m_uimm3});

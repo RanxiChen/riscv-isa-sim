@@ -8,7 +8,9 @@
 #include <cstring>
 #include <vector>
 
-template<typename T, T (*Add)(T, T), T (*Sub)(T, T), T (*Mul)(T, T)>
+template<typename T,
+         T (*Add)(T, T), T (*Sub)(T, T), T (*Mul)(T, T),
+         T (*Max)(T, T), T (*Min)(T, T)>
 class AmeFpOperand
 {
 public:
@@ -31,13 +33,26 @@ public:
     return Mul(lhs.value, rhs.value);
   }
 
+  friend T max(AmeFpOperand lhs, AmeFpOperand rhs)
+  {
+    return Max(lhs.value, rhs.value);
+  }
+
+  friend T min(AmeFpOperand lhs, AmeFpOperand rhs)
+  {
+    return Min(lhs.value, rhs.value);
+  }
+
 private:
   T value;
 };
 
-using AmeFp16Operand = AmeFpOperand<float16_t, f16_add, f16_sub, f16_mul>;
-using AmeFp32Operand = AmeFpOperand<float32_t, f32_add, f32_sub, f32_mul>;
-using AmeFp64Operand = AmeFpOperand<float64_t, f64_add, f64_sub, f64_mul>;
+using AmeFp16Operand = AmeFpOperand<
+  float16_t, f16_add, f16_sub, f16_mul, f16_max, f16_min>;
+using AmeFp32Operand = AmeFpOperand<
+  float32_t, f32_add, f32_sub, f32_mul, f32_max, f32_min>;
+using AmeFp64Operand = AmeFpOperand<
+  float64_t, f64_add, f64_sub, f64_mul, f64_max, f64_min>;
 
 #define AME_FP_EWISE_TYPE_H float16_t
 #define AME_FP_EWISE_TYPE_S float32_t
@@ -51,12 +66,13 @@ using AmeFp64Operand = AmeFpOperand<float64_t, f64_add, f64_sub, f64_mul>;
 #define AME_FP_EWISE_SUPPORTED_S(AMU) ((AMU).supports_fp32_element_wise())
 #define AME_FP_EWISE_SUPPORTED_D(AMU) ((AMU).supports_fp64_element_wise())
 
-#define AME_FP_EWISE(TYPE, BODY)                                         \
+#define AME_FP_EWISE_IMPL(TYPE, USES_ROUNDING, BODY)                     \
   do {                                                                    \
     require_matrix_ms;                                                    \
     auto& AMU = P.AMU;                                                    \
     require(AME_FP_EWISE_SUPPORTED_##TYPE(AMU));                          \
-    require(AMU.xmfrm_is_valid(AMU.get_xmfrm()));                         \
+    if (USES_ROUNDING)                                                    \
+      require(AMU.xmfrm_is_valid(AMU.get_xmfrm()));                       \
     const reg_t dstIndex = insn.m_md();                                   \
     const reg_t ms1Index = insn.m_ms1();                                  \
     const reg_t ms2Index = insn.m_ms2();                                  \
@@ -87,7 +103,8 @@ using AmeFp64Operand = AmeFpOperand<float64_t, f64_add, f64_sub, f64_mul>;
       for (reg_t j = 0; j < N; ++j)                                     \
         sourceRow.push_back(ms1.elt<AmeFpType>(ctrl, j));                 \
     }                                                                     \
-    softfloat_roundingMode = AMU.get_xmfrm();                             \
+    if (USES_ROUNDING)                                                    \
+      softfloat_roundingMode = AMU.get_xmfrm();                           \
     softfloat_exceptionFlags = 0;                                         \
     for (reg_t i = 0; i < M; ++i) {                                      \
       for (reg_t j = 0; j < N; ++j) {                                    \
@@ -107,6 +124,12 @@ using AmeFp64Operand = AmeFpOperand<float64_t, f64_add, f64_sub, f64_mul>;
     ame_set_matrix_fp_exceptions(AMU);                                    \
     AME_END;                                                              \
   } while (0)
+
+#define AME_FP_EWISE(TYPE, BODY)                                         \
+  AME_FP_EWISE_IMPL(TYPE, true, BODY)
+
+#define AME_FP_EWISE_COMPARE(TYPE, BODY)                                 \
+  AME_FP_EWISE_IMPL(TYPE, false, BODY)
 
 template<typename T>
 static inline std::vector<T>
