@@ -8,6 +8,106 @@
 #include <cstring>
 #include <vector>
 
+template<typename T, T (*Add)(T, T), T (*Sub)(T, T), T (*Mul)(T, T)>
+class AmeFpOperand
+{
+public:
+  explicit AmeFpOperand(T value) : value(value) {}
+
+  T raw() const { return value; }
+
+  friend T operator+(AmeFpOperand lhs, AmeFpOperand rhs)
+  {
+    return Add(lhs.value, rhs.value);
+  }
+
+  friend T operator-(AmeFpOperand lhs, AmeFpOperand rhs)
+  {
+    return Sub(lhs.value, rhs.value);
+  }
+
+  friend T operator*(AmeFpOperand lhs, AmeFpOperand rhs)
+  {
+    return Mul(lhs.value, rhs.value);
+  }
+
+private:
+  T value;
+};
+
+using AmeFp16Operand = AmeFpOperand<float16_t, f16_add, f16_sub, f16_mul>;
+using AmeFp32Operand = AmeFpOperand<float32_t, f32_add, f32_sub, f32_mul>;
+using AmeFp64Operand = AmeFpOperand<float64_t, f64_add, f64_sub, f64_mul>;
+
+#define AME_FP_EWISE_TYPE_H float16_t
+#define AME_FP_EWISE_TYPE_S float32_t
+#define AME_FP_EWISE_TYPE_D float64_t
+
+#define AME_FP_EWISE_OPERAND_H AmeFp16Operand
+#define AME_FP_EWISE_OPERAND_S AmeFp32Operand
+#define AME_FP_EWISE_OPERAND_D AmeFp64Operand
+
+#define AME_FP_EWISE_SUPPORTED_H(AMU) ((AMU).supports_fp16_element_wise())
+#define AME_FP_EWISE_SUPPORTED_S(AMU) ((AMU).supports_fp32_element_wise())
+#define AME_FP_EWISE_SUPPORTED_D(AMU) ((AMU).supports_fp64_element_wise())
+
+#define AME_FP_EWISE(TYPE, BODY)                                         \
+  do {                                                                    \
+    require_matrix_ms;                                                    \
+    auto& AMU = P.AMU;                                                    \
+    require(AME_FP_EWISE_SUPPORTED_##TYPE(AMU));                          \
+    require(AMU.xmfrm_is_valid(AMU.get_xmfrm()));                         \
+    const reg_t dstIndex = insn.m_md();                                   \
+    const reg_t ms1Index = insn.m_ms1();                                  \
+    const reg_t ms2Index = insn.m_ms2();                                  \
+    require(dstIndex >= 4 && dstIndex < 8);                               \
+    require(ms1Index >= 4 && ms1Index < 8);                               \
+    require(ms2Index >= 4 && ms2Index < 8);                               \
+    MatrixReg& md = AMU.acc_regs[dstIndex - 4];                           \
+    MatrixReg& ms1 = AMU.acc_regs[ms1Index - 4];                          \
+    MatrixReg& ms2 = AMU.acc_regs[ms2Index - 4];                          \
+    require(md.get_rownum() == ms1.get_rownum());                         \
+    require(md.get_rownum() == ms2.get_rownum());                         \
+    require(md.get_row_bytes() == ms1.get_row_bytes());                   \
+    require(md.get_row_bytes() == ms2.get_row_bytes());                   \
+    using AmeFpType = AME_FP_EWISE_TYPE_##TYPE;                           \
+    using AmeFpValue = AME_FP_EWISE_OPERAND_##TYPE;                       \
+    const reg_t rows = md.get_rownum();                                   \
+    const reg_t cols = md.get_row_bytes() / sizeof(AmeFpType);            \
+    const reg_t M = AMU.mtilem->read();                                   \
+    const reg_t N = AMU.mtilen->read();                                   \
+    require(M <= rows);                                                   \
+    require(N <= cols);                                                   \
+    const reg_t ctrl = insn.m_uimm3();                                   \
+    const bool matrixMatrix = ctrl == 0b111;                              \
+    std::vector<AmeFpType> sourceRow;                                    \
+    if (!matrixMatrix) {                                                  \
+      require(ctrl < M);                                                  \
+      sourceRow.reserve(N);                                               \
+      for (reg_t j = 0; j < N; ++j)                                     \
+        sourceRow.push_back(ms1.elt<AmeFpType>(ctrl, j));                 \
+    }                                                                     \
+    softfloat_roundingMode = AMU.get_xmfrm();                             \
+    softfloat_exceptionFlags = 0;                                         \
+    for (reg_t i = 0; i < M; ++i) {                                      \
+      for (reg_t j = 0; j < N; ++j) {                                    \
+        AmeFpType& Cij = md.elt<AmeFpType>(i, j);                         \
+        const AmeFpValue Aij(ms2.elt<AmeFpType>(i, j));                   \
+        const AmeFpValue Bij(matrixMatrix                                \
+          ? ms1.elt<AmeFpType>(i, j)                                     \
+          : sourceRow[j]);                                                \
+        BODY;                                                              \
+      }                                                                   \
+    }                                                                     \
+    const AmeFpType zero = {0};                                           \
+    for (reg_t i = 0; i < rows; ++i)                                     \
+      for (reg_t j = 0; j < cols; ++j)                                   \
+        if (i >= M || j >= N)                                             \
+          md.elt<AmeFpType>(i, j) = zero;                                \
+    ame_set_matrix_fp_exceptions(AMU);                                    \
+    AME_END;                                                              \
+  } while (0)
+
 template<typename T>
 static inline std::vector<T>
 ame_extract_column(MatrixReg& src, reg_t column)

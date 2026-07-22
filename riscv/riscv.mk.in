@@ -938,6 +938,15 @@ riscv_insn_ext_ame = \
 	msll_w_mv_i \
 	msra_w_mm \
 	msra_w_mv_i \
+	mfadd_h \
+	mfadd_s \
+	mfadd_d \
+	mfsub_h \
+	mfsub_s \
+	mfsub_d \
+	mfmul_h \
+	mfmul_s \
+	mfmul_d \
 	 mcbce8_mv_i \
 	mcbce16_mv_i \
 	mcbce32_mv_i \

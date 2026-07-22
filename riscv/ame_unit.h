@@ -110,6 +110,35 @@ public:
     return (xmisa_features & feature_mask) == feature_mask;
   }
 
+  bool supports_fp_element_wise() const {
+    return (get_xmisa() & xmisa_mfew_mask()) != 0;
+  }
+
+  bool supports_fp16_element_wise() const {
+    const reg_t formats =
+      xmisa_bit(XMISA_BIT_MMF16F16) |
+      xmisa_bit(XMISA_BIT_MMF8F16) |
+      xmisa_bit(XMISA_BIT_MMF16F32);
+    return supports_fp_element_wise() && (get_xmisa() & formats) != 0;
+  }
+
+  bool supports_fp32_element_wise() const {
+    const reg_t formats =
+      xmisa_bit(XMISA_BIT_MMF32F32) |
+      xmisa_bit(XMISA_BIT_MMF16F32) |
+      xmisa_bit(XMISA_BIT_MMBF16F32) |
+      xmisa_bit(XMISA_BIT_MMF32F64) |
+      xmisa_bit(XMISA_BIT_MMF8F32);
+    return supports_fp_element_wise() && (get_xmisa() & formats) != 0;
+  }
+
+  bool supports_fp64_element_wise() const {
+    const reg_t formats =
+      xmisa_bit(XMISA_BIT_MMF64F64) |
+      xmisa_bit(XMISA_BIT_MMF32F64);
+    return supports_fp_element_wise() && (get_xmisa() & formats) != 0;
+  }
+
   reg_t xmisa_mfic_mask() const;
   reg_t xmisa_mfew_mask() const;
   reg_t xmisa_miew_mask() const;

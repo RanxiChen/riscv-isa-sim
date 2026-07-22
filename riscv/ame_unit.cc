@@ -129,6 +129,10 @@ void ameUnit_t::set_mtilen(reg_t value)
 void ameUnit_t::reset()
 {
   xmisa_features = 0;
+  // Element-wise umbrella capabilities.  mfew is also the common entry point
+  // reserved for the later floating-point conversion instructions.
+  xmisa_features |= xmisa_mfew_mask();
+  xmisa_features |= xmisa_miew_mask();
   if (ELEN >= 16)
     xmisa_features |= xmisa_bit(XMISA_BIT_MMF16F16);
   if (ELEN >= 32)
