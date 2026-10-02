@@ -1,7 +1,7 @@
+#include <cstdint> // DRAMsim3 public header requires uint64_t from its caller.
 #include "dramsim3.h"
 #include "configuration.h"
 #include <algorithm>
-#include <cstdint>
 #include <deque>
 #include <filesystem>
 #include <fstream>
