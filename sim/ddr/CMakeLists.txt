@@ -9,7 +9,7 @@ add_subdirectory(../../third_party/DRAMsim3 dramsim3 EXCLUDE_FROM_ALL)
 # Upstream otherwise writes the shared library into its source checkout.
 set_target_properties(dramsim3 PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 add_executable(ddr_master main.cpp)
-target_link_libraries(ddr_master PRIVATE dramsim3)
+target_link_libraries(ddr_master PRIVATE dramsim3 inih)
 target_compile_options(ddr_master PRIVATE -Wall -Wextra -Werror)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 enable_testing()
