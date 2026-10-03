@@ -22,6 +22,7 @@
 class mmu_t;
 class remote_bitbang_t;
 class socketif_t;
+namespace breeze { class CoreModel; class SpikeSource; }
 
 // Type for holding a pair of device factory and device specialization arguments.
 using device_factory_sargs_t = std::pair<const device_factory_t*, std::vector<std::string>>;
@@ -45,6 +46,9 @@ public:
   int run();
   void set_debug(bool value);
   void set_histogram(bool value);
+  void enable_breeze_model(unsigned ghr_length, unsigned btb_entries,
+                           unsigned home_latency, bool gshare);
+  uint64_t breeze_cycles() const;
   void add_device(reg_t addr, std::shared_ptr<abstract_device_t> dev);
 
   // Configure logging
@@ -100,6 +104,8 @@ private:
   FILE *cmd_file; // pointer to debug command input file
 
   std::optional<unsigned long long> instruction_limit;
+  std::unique_ptr<breeze::CoreModel> breeze_model;
+  std::unique_ptr<breeze::SpikeSource> breeze_source;
 
   socketif_t *socketif;
   std::ostream sout_; // used for socket and terminal interface

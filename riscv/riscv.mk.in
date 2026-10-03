@@ -8,6 +8,7 @@ riscv_subproject_deps = \
 	softfloat \
 
 riscv_CFLAGS = -fPIC -I$(src_dir)/fdt
+VPATH += $(src_dir)/sim/breeze
 
 riscv_install_shared_lib = yes
 
@@ -73,6 +74,10 @@ riscv_srcs = \
 	ns16550.cc \
 	debug_module.cc \
 	remote_bitbang.cc \
+	predictor.cc \
+	dcache.cc \
+	core.cc \
+	spike_source.cc \
 	jtag_dtm.cc \
 	csrs.cc \
 	csr_init.cc \

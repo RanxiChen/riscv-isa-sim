@@ -22,6 +22,8 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include "imsic.h"
+#include "sim/breeze/core.h"
+#include "sim/breeze/spike_source.h"
 
 volatile bool ctrlc_pressed = false;
 static void handle_signal(int sig)
@@ -344,6 +346,8 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
 
 sim_t::~sim_t()
 {
+  breeze_source.reset();
+  breeze_model.reset();
   for (size_t i = 0; i < procs.size(); i++)
     delete procs[i];
   delete debug_mmu;
@@ -361,8 +365,47 @@ int sim_t::run()
   return htif_t::run();
 }
 
+void sim_t::enable_breeze_model(unsigned ghr_length, unsigned btb_entries,
+                                unsigned home_latency, bool gshare)
+{
+  if (procs.size() != 1)
+    throw std::runtime_error("Breeze model currently requires one hart");
+  if (instruction_limit.has_value())
+    throw std::runtime_error("--breeze-model cannot use --instructions (cycle/instruction units differ)");
+  breeze::CoreModel::Config model_config;
+  model_config.ghr_length = ghr_length;
+  model_config.btb_entries = btb_entries;
+  model_config.home_latency = home_latency;
+  model_config.gshare = gshare;
+  breeze_model = std::make_unique<breeze::CoreModel>(model_config);
+  breeze_source = std::make_unique<breeze::SpikeSource>(procs.front());
+}
+
+uint64_t sim_t::breeze_cycles() const
+{
+  return breeze_model ? breeze_model->cycles() : 0;
+}
+
 void sim_t::step(size_t n)
 {
+  if (breeze_model) {
+    // With this explicit mode, n is a number of Breeze core cycles. Spike
+    // executes an instruction only when the modeled frontend requests one.
+    for (size_t i = 0; i < n; ++i) {
+      breeze_model->tick(*breeze_source);
+      if (breeze_model->cycles() % INTERLEAVE == 0)
+        procs.front()->get_mmu()->yield_load_reservation();
+      if (++current_step == INSNS_PER_RTC_TICK) {
+        current_step = 0;
+        for (auto& dev : devices) dev->tick(1);
+      }
+      // Return to HTIF as soon as the target writes its command mailbox.
+      // In particular, this avoids quantizing short-program cycle totals to
+      // the ordinary 5000-instruction interleave interval.
+      if (breeze_source->take_tohost_store(get_tohost_addr())) break;
+    }
+    return;
+  }
   for (size_t i = 0, steps = 0; i < n; i += steps)
   {
     steps = std::min(n - i, INTERLEAVE - current_step);

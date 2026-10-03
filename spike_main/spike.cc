@@ -58,6 +58,11 @@ static void help(int exit_code = 1)
   fprintf(stderr, "                          specify --device=<name>,<args> to pass down extra args.\n");
   fprintf(stderr, "  --dtb-discovery       Enable direct device discovery from device tree blob. Requires --dtb and usage of special \"spike_plugin_params\" dts field.\n");
   fprintf(stderr, "  --log-cache-miss      Generate a log of cache miss\n");
+  fprintf(stderr, "  --breeze-model        Enable the single-hart Breeze coarse cycle model\n");
+  fprintf(stderr, "  --breeze-ghr=<n>      GShare history bits [default 8]\n");
+  fprintf(stderr, "  --breeze-btb=<n>      BTB entries [default 16]\n");
+  fprintf(stderr, "  --breeze-home-latency=<n>  Abstract cache Home response delay [default 6]\n");
+  fprintf(stderr, "  --breeze-no-gshare    Model the baseline without GShare\n");
   fprintf(stderr, "  --log-commits         Generate a log of commits info\n");
   fprintf(stderr, "  --extension=<name>    Specify RoCC Extension\n");
   fprintf(stderr, "                          This flag can be used multiple times.\n");
@@ -339,6 +344,11 @@ int main(int argc, char** argv)
   std::unique_ptr<cache_sim_t> l2;
   bool log_cache = false;
   bool log_commits = false;
+  bool breeze_model = false;
+  bool breeze_gshare = true;
+  unsigned breeze_ghr = 8;
+  unsigned breeze_btb = 16;
+  unsigned breeze_home_latency = 6;
   const char *log_path = nullptr;
   std::vector<std::function<extension_t*()>> extensions;
   const char* initrd = NULL;
@@ -414,6 +424,11 @@ int main(int argc, char** argv)
   parser.option(0, "l2", 1, [&](const char* s){l2.reset(cache_sim_t::construct(s, "L2$"));});
   parser.option(0, "big-endian", 0, [&](const char UNUSED *s){cfg.endianness = endianness_big;});
   parser.option(0, "log-cache-miss", 0, [&](const char UNUSED *s){log_cache = true;});
+  parser.option(0, "breeze-model", 0, [&](const char UNUSED *s){breeze_model = true;});
+  parser.option(0, "breeze-ghr", 1, [&](const char* s){breeze_ghr = atoul_nonzero_safe(s);});
+  parser.option(0, "breeze-btb", 1, [&](const char* s){breeze_btb = atoul_nonzero_safe(s);});
+  parser.option(0, "breeze-home-latency", 1, [&](const char* s){breeze_home_latency = atoul_safe(s);});
+  parser.option(0, "breeze-no-gshare", 0, [&](const char UNUSED *s){breeze_gshare = false;});
   parser.option(0, "isa", 1, [&](const char* s){cfg.isa = s;});
   parser.option(0, "pmpregions", 1, [&](const char* s){cfg.pmpregions = atoul_safe(s);});
   parser.option(0, "pmpgranularity", 1, [&](const char* s){cfg.pmpgranularity = atoul_safe(s);});
@@ -585,8 +600,14 @@ int main(int argc, char** argv)
   s.set_debug(debug);
   s.configure_log(log, log_commits);
   s.set_histogram(histogram);
+  if (breeze_model) s.enable_breeze_model(breeze_ghr, breeze_btb,
+                                         breeze_home_latency, breeze_gshare);
 
   auto return_code = s.run();
+
+  if (breeze_model)
+    fprintf(stderr, "Breeze coarse model: %llu core cycles\n",
+            static_cast<unsigned long long>(s.breeze_cycles()));
 
   for (auto& mem : mems)
     delete mem.second;
